@@ -18,8 +18,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 
 /* ---------- the piece: six sections around the water ---------- */
 #piece{position:fixed;inset:0;overflow:hidden}
+html,body{height:auto;min-height:100%}
 #gl,#ov{position:absolute;inset:0;width:100%;height:100%;display:block}
-#gl{cursor:ew-resize;touch-action:none}
+#gl{cursor:ew-resize;touch-action:pan-y}
 #ov{pointer-events:none}
 .grid{position:absolute;inset:0;display:grid;grid-template-columns:minmax(220px,300px) 1fr minmax(220px,300px);
   grid-template-rows:auto 1fr auto;padding:40px 48px;pointer-events:none}
@@ -44,8 +45,7 @@ h1{font-weight:400;font-size:34px;line-height:1.05;margin:0;letter-spacing:-.01e
 
 /* ---------- how it works ---------- */
 #physics{min-height:100%;padding:40px 48px 80px}
-#physics header{display:flex;justify-content:space-between;align-items:baseline}
-#physics header .t{font-size:22px}
+#physics header{display:flex;justify-content:space-between;align-items:flex-start}
 #physics article{max-width:640px;margin:64px auto 0}
 #physics h2{font-weight:400;font-size:32px;margin:0 0 22px;letter-spacing:-.01em}
 #physics p{margin:0 0 14px;font-size:17px}
@@ -87,13 +87,14 @@ a{color:inherit}
     <div class="s3"><p class="label">Spout</p><ul class="picks" id="spouts"></ul></div>
     <div class="s4"><p class="label">Flow</p><ul class="picks" id="flows"></ul></div>
     <div class="s5"><p>Surface tension pulls the stream round. It overshoots and flips, again and again. As the water falls, the flips stand still in the air as X's.</p></div>
-    <div class="s6"><p id="say"></p><div class="hint">Drag to walk around</div></div>
+    <div class="s6"><p id="say"></p><div class="hint"><span id="depth"></span> · drag to walk around</div></div>
   </div>
 </section>
+<div id="scroll"></div>
 
 <section id="physics" hidden>
   <header>
-    <div class="t">X Stream</div>
+    <div><h1>X Stream</h1><p class="sub">Why a tap's stream crosses itself</p></div>
     <button class="link" data-page="piece">Back to the water</button>
   </header>
   <article>
@@ -128,7 +129,7 @@ cₙ(z) = εₙ(z) cos φₙ(z),   φₙ(z) = ∫ kₙ dz</div>
       <tr><td>Density ρ (18 °C)</td><td>998.6 kg/m³ · Thiesen fit</td></tr>
       <tr><td>Refractive index</td><td>1.333</td></tr>
       <tr><td>Spout bore</td><td>8 mm</td></tr>
-      <tr><td>Flows: trickle · gentle · steady · brisk</td><td>0.6 · 1.0 · 1.6 · 2.4 L/min</td></tr>
+      <tr><td>Flows: thread · trickle · gentle · steady · brisk</td><td>0.25 · 0.6 · 1.0 · 1.6 · 2.4 L/min</td></tr>
     </table></div></details>
     <details><summary>What is estimated</summary><div><ul>
       <li class="est">A real tap's spout shape is unknown. The five spouts are typical guesses; the icons draw them three times exaggerated.</li>
@@ -136,7 +137,8 @@ cₙ(z) = εₙ(z) cos φₙ(z),   φₙ(z) = ∫ kₙ dz</div>
       <li class="est">The jet is assumed smooth (laminar). Above Reynolds ≈ 4000 a real spout may run rough and blur the X.</li>
       <li class="est">Bohr's 37/24 coefficient is quoted from the oscillating-jet literature, not re-derived.</li>
       <li class="est">Damping and stretching laws are leading-order estimates. Here they roughly cancel over 30 cm.</li>
-      <li class="est">Breakup ripples start from an assumed tap vibration of 10⁻⁴·³ of the radius.</li>
+      <li class="est">Breakup ripples start from an assumed tap vibration of 10⁻⁴·³ of the radius. The beading point moves a few cm per factor of 10 in that guess. Beads past pinch-off are drawn schematically.</li>
+      <li class="est">At the Thread flow a real 8 mm spout may cling and drip; the jet is modelled as leaving cleanly.</li>
       <li class="est">The dye and the morning light are invented, to make clear water visible. The shape and optics are computed.</li>
       <li class="est">The gentle motion is an invented tap flicker: the wobble's strength varies by ±10 % at 1.1 Hz and ±5 % at 5.5 Hz, carried down at the water's own speed.</li>
     </ul></div></details>
@@ -260,7 +262,8 @@ function compute(){
   const wOpt0 = 0.697/a0*U0;
   let best = null;
   const cand = [];
-  for(let j=0;j<40;j++) cand.push(wOpt0*Math.pow(10, -0.8 + 1.1*j/39));
+  // scan widely: as the jet speeds up, a fixed frequency slides to lower ka, so ripples born too short to grow at the spout become the fastest growers lower down
+  for(let j=0;j<70;j++) cand.push(wOpt0*Math.pow(10, -0.5 + 2.3*j/69));
   for(const w of cand){
     let ln = lnd0, zb = Infinity, sPrev = rpGrowth(a[0], w/U[0], sigma, rho)/U[0];
     for(let i=1;i<NZ;i++){
@@ -462,11 +465,18 @@ const SPOUTS = [
   {key:'square', name:'Square',         ar:1.00, e3:0,     e4:0.08}
 ];
 const FLOWS = [
-  {name:'Trickle', q:0.6}, {name:'Gentle', q:1.0}, {name:'Steady', q:1.6}, {name:'Brisk', q:2.4}
+  {name:'Thread', q:0.25}, {name:'Trickle', q:0.6}, {name:'Gentle', q:1.0}, {name:'Steady', q:1.6}, {name:'Brisk', q:2.4}
 ];
-let spoutI = 1, flowI = 1;
+let spoutI = 1, flowI = 2;
 const DYE = 0.8, EXPOSURE = 1.6;
-const Z0 = -0.012, Z1 = 0.085;                 // m, what the full canvas height shows (true scale)
+const Z0 = -0.012, VIEW = 0.097;               // m: top of the stream view, and how much one screen height shows (true scale)
+let V0 = Z0, V1 = Z0 + VIEW;                    // current view, follows the page scroll down the whole stream
+function updateView(){
+  V0 = Math.min(ZMAX - VIEW, Z0 + window.scrollY/innerHeight*VIEW); V1 = V0 + VIEW;
+  const d = document.getElementById('depth');
+  if(d) d.textContent = V0 < 0.01 ? 'Scroll to follow it down' : `${Math.round((V0+V1)/2*100)} cm below the spout`;
+}
+window.addEventListener('scroll', () => { updateView(); dirty = true; lastInteract = performance.now(); }, {passive:true});
 
 function applyChoice(){
   const s = SPOUTS[spoutI];
@@ -508,6 +518,8 @@ function resize(){
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   Wpx = Math.round(innerWidth*DPR); Hpx = Math.round(innerHeight*DPR);
   ovc.width = Wpx; ovc.height = Hpx;
+  document.getElementById('scroll').style.height = Math.round((ZMAX - Z0)/VIEW*innerHeight) + 'px';
+  updateView();
   setGLScale(gScale || 1, true);
 }
 function setGLScale(q, force){
@@ -519,7 +531,7 @@ function setGLScale(q, force){
 }
 function ripplesVisible(){
   if(!M) return false;
-  for(let i=M.idx(Z1); i>=0; i-=8) if(M.del[1][i] > 0.004) return true;
+  for(let i=M.idx(V1); i>=M.idx(Math.max(0,V0)); i-=8) if(M.del[1][i] > 0.004) return true;
   return false;
 }
 function frame(now){
@@ -546,8 +558,8 @@ function frame(now){
     gl.uniform1f(uni.uCard, 0); gl.uniform1f(uni.uCardAz, 0);
     gl.uniform1f(uni.uExp, EXPOSURE);
     gl.uniform4f(uni.uVP, (centerFrac()-0.5)*w, 0, w, h);
-    gl.uniform1f(uni.uZ0, Z0*1000); gl.uniform1f(uni.uZ1, Z1*1000);
-    gl.uniform1f(uni.uDpx, (Z1-Z0)*1000/h);
+    gl.uniform1f(uni.uZ0, V0*1000); gl.uniform1f(uni.uZ1, V1*1000);
+    gl.uniform1f(uni.uDpx, (V1-V0)*1000/h);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     drawOverlay();
   }
@@ -558,27 +570,36 @@ function frame(now){
 function drawOverlay(){
   ov.clearRect(0,0,Wpx,Hpx);
   if(!M) return;
-  const mmpx = (Z1-Z0)*1000/Hpx, cx = Wpx*centerFrac();
-  const y = z => (z - Z0)/(Z1-Z0)*Hpx;
+  const mmpx = (V1-V0)*1000/Hpx, cx = Wpx*centerFrac();
+  const y = z => (z - V0)/(V1-V0)*Hpx;
   const cream = 'rgba(47,43,32,';
   // spout, drawn as a quiet outline
   const rO = (P.D/2 + 1.6)/mmpx, y0 = y(0);
+  if(y0 > 0){
   ov.fillStyle = 'rgba(47,43,32,.07)'; ov.fillRect(cx-rO, 0, 2*rO, y0);
   ov.strokeStyle = cream+'.85)'; ov.lineWidth = 1*DPR;
   ov.beginPath(); ov.moveTo(cx-rO, 0); ov.lineTo(cx-rO, y0); ov.lineTo(cx+rO, y0); ov.lineTo(cx+rO, 0); ov.stroke();
+  }
   // the wobble, as a hairline running alongside the stream at the same heights
   const m = dominantMode();
   const gx = cx + Math.max(M.a0*1000/mmpx*(innerWidth < 720 ? 1.6 : 2.2), 40*DPR), amp = 13*DPR;
-  ov.strokeStyle = cream+'.22)'; ov.beginPath(); ov.moveTo(gx, y(0)); ov.lineTo(gx, Hpx); ov.stroke();
+  const zEnd = Math.min(ZMAX, Number.isFinite(M.zBreak) ? M.zBreak : ZMAX);
+  ov.strokeStyle = cream+'.22)'; ov.beginPath(); ov.moveTo(gx, Math.max(0,y(0))); ov.lineTo(gx, Math.min(Hpx, y(zEnd))); ov.stroke();
   ov.strokeStyle = cream+'.8)'; ov.lineWidth = 1*DPR; ov.beginPath();
   const scale = m ? amp/Math.max(1e-6, maxEps(m)) : 0;
-  for(let i=0; i<=M.idx(Z1); i+=2){
+  const iA = M.idx(Math.max(0, V0)), iB = M.idx(Math.min(V1, zEnd));
+  for(let i=iA; i<=iB; i+=2){
     const xx = gx + (m ? m.c[i]*scale : 0), yy = y(M.z[i]);
-    i ? ov.lineTo(xx, yy) : ov.moveTo(xx, yy);
+    i>iA ? ov.lineTo(xx, yy) : ov.moveTo(xx, yy);
   }
   ov.stroke();
   ov.fillStyle = cream+'.75)'; ov.font = `italic ${12.5*DPR}px Newsreader, Georgia, serif`;
-  if(innerWidth >= 720) ov.fillText(m ? 'the wobble' : 'no wobble', gx + 18*DPR, y(0.012));
+  if(innerWidth >= 720 && y(0.012) > 0) ov.fillText(m ? 'the wobble' : 'no wobble', gx + 18*DPR, y(0.012));
+  if(Number.isFinite(M.zBreak) && y(M.zBreak) > 0 && y(M.zBreak) < Hpx){   // where the stream starts to bead (estimate)
+    const yb = y(M.zBreak);
+    ov.strokeStyle = cream+'.5)'; ov.setLineDash([3*DPR, 4*DPR]); ov.beginPath(); ov.moveTo(gx - 8*DPR, yb); ov.lineTo(gx + 14*DPR, yb); ov.stroke(); ov.setLineDash([]);
+    ov.fillStyle = cream+'.75)'; ov.fillText('beads form about here', gx + 18*DPR, yb + 4*DPR);
+  }
 }
 const centerFrac = () => innerWidth < 720 ? 0.71 : 0.5;   // on phones the water moves right, the words keep the left
 function dominantMode(){
@@ -586,7 +607,7 @@ function dominantMode(){
   for(const n of [2,3,4]){ const md = M.modes[n]; if(md.eps0 > 0.002 && (!best || md.eps0 > best.eps0)) best = md; }
   return best;
 }
-function maxEps(m){ let e = 0; for(let i=0; i<=M.idx(Z1); i++) e = Math.max(e, m.eps[i]); return e; }
+function maxEps(m){ let e = 0; for(let i=0; i<NZ; i++) e = Math.max(e, m.eps[i]); return e; }
 
 // ---------------- words ----------------
 function say(){
@@ -633,15 +654,16 @@ glc.addEventListener('pointercancel', () => drag = null);
 function showPage(name){
   document.getElementById('piece').hidden = name !== 'piece';
   document.getElementById('physics').hidden = name !== 'physics';
+  document.getElementById('scroll').hidden = name !== 'piece';
   window.scrollTo(0,0);
-  if(name === 'physics') drawPhysics(); else { resize(); dirty = true; }
+  if(name === 'physics') drawPhysics(); else { resize(); updateView(); dirty = true; }
 }
 function drawPhysics(){ drawChart(); readouts(); }
 function drawChart(){
   const c = document.getElementById('chart'), x = c.getContext('2d');
   const d = Math.min(window.devicePixelRatio||1, 2), W = c.clientWidth*d, H = c.clientHeight*d;
   c.width = W; c.height = H; x.clearRect(0,0,W,H);
-  const L = 0.35, iMax = M.idx(L), pad = 6*d, X = z => pad + z/L*(W-2*pad);
+  const L = 0.6, iMax = M.idx(L), pad = 6*d, X = z => pad + z/L*(W-2*pad);
   x.font = `italic ${13*d}px Newsreader, Georgia, serif`;
   const cream = a => `rgba(47,43,32,${a})`;
   // top: the radius (as the stream's own silhouette, both sides)
@@ -663,11 +685,12 @@ function drawChart(){
     for(let i=0;i<=iMax;i++){ const yy = mid - m.c[i]/e*(b1-b0)/2; i ? x.lineTo(X(M.z[i]), yy) : x.moveTo(X(M.z[i]), yy); }
     x.stroke();
   }
+  if(Number.isFinite(M.zBreak) && M.zBreak < L){ x.strokeStyle = cream(.55); x.setLineDash([3*d,4*d]); x.beginPath(); x.moveTo(X(M.zBreak), top0); x.lineTo(X(M.zBreak), H-20*d); x.stroke(); x.setLineDash([]); }
   x.fillStyle = cream(.6);
-  for(let cm=0; cm<=35; cm+=5){ x.textAlign = cm===0?'left':(cm===35?'right':'center'); x.fillText(cm+' cm', X(cm/100), H-4*d); }
+  for(let cm=0; cm<=60; cm+=10){ x.textAlign = cm===0?'left':(cm===60?'right':'center'); x.fillText(cm+' cm', X(cm/100), H-4*d); }
   x.textAlign = 'left';
   document.getElementById('chartnote').textContent =
-    `${SPOUTS[spoutI].name} spout, ${FLOWS[flowI].name.toLowerCase()} flow (${FLOWS[flowI].q} L/min), over the first 35 cm.`;
+    `${SPOUTS[spoutI].name} spout, ${FLOWS[flowI].name.toLowerCase()} flow (${FLOWS[flowI].q} L/min), over the first 60 cm.` + (Number.isFinite(M.zBreak) ? ` The dashed line is where it starts to bead (estimate, ${Math.round(M.zBreak*100)} cm).` : '');
 }
 function readouts(){
   const f = (v,d=2) => Number.isFinite(v) ? v.toFixed(d) : '—';

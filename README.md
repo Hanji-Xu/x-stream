@@ -11,7 +11,8 @@
 
 A soft yellow page in six quiet sections around one stream of water. The stream is ray-traced at true scale and lit by morning light.
 - **Spout**: Round, Everyday, Oval, Three-cornered or Square. The icons draw each opening with the out-of-round part 3× bigger so it shows at icon size.
-- **Flow**: Trickle, Gentle, Steady or Brisk (0.6, 1.0, 1.6 or 2.4 L/min through an 8 mm bore).
+- **Flow**: Thread, Trickle, Gentle, Steady or Brisk (0.25, 0.6, 1.0, 1.6 or 2.4 L/min through an 8 mm bore). At Thread the stream beads up about 21 cm down.
+- **Scroll** to follow the stream down its whole 62 cm, at true scale, as it tapers and (at low flow) breaks into beads. A dashed tick marks where beads form (estimate).
 - **Drag sideways** to walk around the stream. The water moves slightly, from a small tap flicker carried down at the water's own speed.
 - The hairline beside the water is the wobble itself, drawn at the same heights as the stream.
 - **How it works** opens a second page with a short explanation, a chart, and expandable sections: numbers for the current stream, equations, constants, estimates and sources.
@@ -51,8 +52,9 @@ The surface is `R(θ,z) = a(z) · [1 + Σₙ cₙ(z) cos n(θ − θₙ)] / √(
 ### 3. Breakup into drops (Rayleigh–Plateau)
 - Growth rate of an axisymmetric disturbance (inviscid): `s² = (σ / ρ a³) x (1 − x²) I₁(x)/I₀(x)` for x = k a < 1.
 - Tap vibration seeds disturbances of fixed angular frequency w at the spout. They are carried down with the water, so the local wavenumber is `k = w/U(z)`, and the amplitude is `δ₀ exp(∫ s/U dz)`.
-- The page scans 40 frequencies, keeps the one that reaches δ = 1 first, and draws it with two neighbours (×0.93, ×1.08). Breakup is estimated where the summed amplitude reaches the radius.
-- These ripples travel, so they are the only moving part. The X pattern itself is steady.
+- The page scans 70 frequencies from 0.3× to 63× the spout's optimum, keeps the one that reaches δ = 1 first, and draws it with two neighbours (×0.93, ×1.08). Breakup is estimated where the summed amplitude reaches the radius.
+- The scan has to be wide. As the jet speeds up, a fixed frequency slides to lower ka, so ripples too short to grow at the spout become the fastest growers lower down. (An earlier version scanned only 0.16–2× and missed them, so it never showed breakup within 62 cm.)
+- These ripples travel down the stream. The X pattern itself is steady apart from the small tap flicker below.
 
 ### 4. Optics (every pixel)
 - Orthographic camera, rays hit the exact surface R(θ,z,t) (ray march + bisection). The normal is the numerical gradient of `|r| − R`, which includes the slope dR/dz. That slope is what tilts the highlights.
@@ -82,6 +84,7 @@ The surface is `R(θ,z) = a(z) · [1 + Σₙ cₙ(z) cos n(θ − θₙ)] / √(
 - **Air drag** and the air's own effect on the waves are neglected (fine below a few m/s).
 - **Room lighting and dye** are invented, to make clear water visible. Only the geometry and optics are computed.
 - **Motion** is an invented tap flicker: the wobble amplitude is multiplied by 1 + 0.10 sin(2π·1.1 Hz·t′) + 0.05 sin(2π·5.5 Hz·t′ + 1.3), with t′ = t − T(z) so the flicker is carried down at the water's speed. The X spacing does not change.
+- At the Thread flow (Weber number ≈ 0.75) a real 8 mm spout may cling and drip. The jet is modelled as leaving cleanly.
 - Fixed settings: 8 mm bore, 18 °C clean water, spout rotated 20°, tap vibration 10^−4.3 of the radius.
 
 ## References

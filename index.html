@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Water X Stream</title>
+<style>
+:root{
+  --bg:#0d1014; --panel:#151a20; --line:#262e38; --ink:#e6ebf0; --dim:#8b97a4; --acc:#6fc3ff; --warn:#ffb15c;
+  --c2:#6fc3ff; --c3:#ff8fb1; --c4:#b9e27a; --ca:#d9d2c2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;align-items:baseline;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.2px}
+header .sub{color:var(--dim);font-size:12.5px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:calc(100% - 49px)}
+#stage{position:relative;overflow:hidden;background:#000;cursor:grab}
+#stage:active{cursor:grabbing}
+#gl,#ov{position:absolute;inset:0;width:100%;height:100%;display:block}
+#ov{pointer-events:none}
+#hint{position:absolute;right:12px;bottom:10px;color:#9aa6b2;font-size:11.5px;background:rgba(0,0,0,.45);padding:4px 8px;border-radius:6px;pointer-events:none}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:12px 14px 30px}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin:16px 0 8px;font-weight:600}
+h2:first-child{margin-top:2px}
+.row{display:grid;grid-template-columns:118px 1fr 64px;align-items:center;gap:8px;margin:5px 0}
+.row label{color:#c5cdd6}
+.row output{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--acc)}
+select{width:100%;background:#0f1318;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 6px}
+.chips button{background:#0f1318;color:#cdd5dd;border:1px solid var(--line);border-radius:14px;padding:3px 9px;font-size:12px;cursor:pointer}
+.chips button:hover{border-color:var(--acc);color:#fff}
+.chk{display:flex;align-items:center;gap:7px;margin:5px 0;color:#c5cdd6}
+table.read{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.read td{padding:2px 0;border-bottom:1px dashed #222a33}
+table.read td:last-child{text-align:right}
+.warn{color:var(--warn);font-size:12px;margin-top:6px}
+.note{color:var(--dim);font-size:12px}
+canvas.plot{width:100%;display:block;background:#0f1318;border:1px solid var(--line);border-radius:6px}
+#xsec{width:150px;height:150px}
+.xs{display:flex;gap:10px;align-items:center}
+details{margin-top:10px;color:#c5cdd6}
+details summary{cursor:pointer;color:var(--acc)}
+code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#cfe6ff}
+@media (max-width:860px){main{grid-template-columns:1fr;height:auto}#stage{height:78vh}aside{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Water X Stream</h1>
+  <span class="sub">Why a smooth tap stream shows crossing X lines: a capillary standing wave on a free jet, ray-traced.</span>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="gl"></canvas>
+    <canvas id="ov"></canvas>
+    <div id="hint">drag sideways to walk around the stream · drag up/down or scroll to move along it · click the left strip to jump</div>
+  </div>
+  <aside>
+    <h2>Tap</h2>
+    <div class="row"><label for="q">Flow rate</label><input id="q" type="range" min="0" max="1" step="0.001"><output id="qo"></output></div>
+    <div class="row"><label for="d">Spout diameter</label><input id="d" type="range" min="3" max="16" step="0.1"><output id="do"></output></div>
+
+    <h2>Spout shape</h2>
+    <div class="chips" id="shapes">
+      <button data-p="round">Perfectly round</button>
+      <button data-p="tap">Ordinary tap (guess)</button>
+      <button data-p="ellipse">Squashed oval</button>
+      <button data-p="tri">Triangular</button>
+      <button data-p="square">Square</button>
+      <button data-p="mix">Bent tube</button>
+    </div>
+    <div class="row"><label for="e2">Oval (axis ratio)</label><input id="e2" type="range" min="1" max="1.6" step="0.005"><output id="e2o"></output></div>
+    <div class="row"><label for="e3">Triangularity</label><input id="e3" type="range" min="0" max="0.15" step="0.001"><output id="e3o"></output></div>
+    <div class="row"><label for="e4">Squareness</label><input id="e4" type="range" min="0" max="0.15" step="0.001"><output id="e4o"></output></div>
+    <div class="row"><label for="rot">Spout rotation</label><input id="rot" type="range" min="0" max="90" step="1"><output id="roto"></output></div>
+
+    <h2>Water</h2>
+    <div class="row"><label for="tc">Temperature</label><input id="tc" type="range" min="2" max="80" step="1"><output id="tco"></output></div>
+    <label class="chk"><input id="soap" type="checkbox"> Dish soap in the water (lower surface tension, estimate)</label>
+    <div class="row"><label for="nz">Tap vibration</label><input id="nz" type="range" min="-7" max="-2" step="0.05"><output id="nzo"></output></div>
+
+    <h2>Looking</h2>
+    <div class="row"><label for="lt">Room light</label><select id="lt"><option value="0">Kitchen: window + ceiling panel</option><option value="1">Dark room, two strip lights</option><option value="2">Backlit by a window</option></select></div>
+    <label class="chk"><input id="card" type="checkbox"> Checkered card 4 cm behind the stream</label>
+    <div class="row"><label for="dye">Food dye</label><input id="dye" type="range" min="0" max="1" step="0.01"><output id="dyeo"></output></div>
+    <div class="row"><label for="ex">Exposure</label><input id="ex" type="range" min="0.5" max="4" step="0.05"><output id="exo"></output></div>
+    <div class="row"><label for="az">Walk around</label><input id="az" type="range" min="0" max="360" step="1"><output id="azo"></output></div>
+    <div class="row"><label for="el">Eye height</label><input id="el" type="range" min="-25" max="25" step="1"><output id="elo"></output></div>
+    <div class="row"><label for="win">Close-up height</label><input id="win" type="range" min="2" max="25" step="0.5"><output id="wino"></output></div>
+    <div class="row"><label for="len">Strip length</label><input id="len" type="range" min="10" max="60" step="1"><output id="leno"></output></div>
+    <label class="chk"><input id="ann" type="checkbox" checked> Mark where the cross-section is round (nodes)</label>
+    <label class="chk"><input id="frz" type="checkbox"> Freeze time (the X pattern itself is steady; only breakup ripples move)</label>
+
+    <h2>What the physics says</h2>
+    <table class="read" id="read"></table>
+    <div id="warns"></div>
+
+    <h2>Along the stream</h2>
+    <canvas class="plot" id="plot" height="300"></canvas>
+    <div class="note">Top: jet radius. Middle: local wavelength of each shape wave. Bottom: the shape deformation itself, its sign flipping is the alternation you see. Shaded band is the close-up window; the dashed line is the estimated breakup into drops.</div>
+
+    <h2>Cross-section at the cursor</h2>
+    <div class="xs"><canvas id="xsec" width="300" height="300"></canvas>
+      <div class="note" id="xsnote">Hover over the close-up to slice the stream. The arrow is your line of sight. The dashed circle is a round jet of the same area.</div></div>
+
+    <details><summary>How it works, in one paragraph</summary>
+      <p>A spout is never perfectly round. The jet leaves with the spout's slightly oval (or triangular, square) cross-section, and surface tension pulls it back toward a circle. Water has inertia, so it overshoots: the oval flips 90°, then flips back, a free oscillation at Rayleigh's frequency. The water moves down while it oscillates, so time becomes height: the oscillation is frozen into a steady pattern along the stream, one full flip-and-back every wavelength λ = 2πU/ω. Seen from the side the stream looks alternately wide and thin, and the curved faces that catch the room lights swap sides at every node. The bright reflection lines therefore cross, which is the X. Gravity speeds the water up and thins it, so the X's get longer as they go down, until the Rayleigh–Plateau instability breaks the stream into drops.</p>
+      <p>Every pixel here is a ray traced through the computed surface with Snell's law and Fresnel reflection (water n = 1.333). Nothing is drawn by hand except the spout. Equations, constants and every estimate are listed in the README.</p>
+    </details>
+  </aside>
+</main>
+
+<script>
+"use strict";
+// ======================================================================
+//  PHYSICS (SI units internally; texture to GPU is in mm and s)
+// ======================================================================
+const G = 9.81;            // m/s^2
+const N_IOR = 1.333;       // refractive index of water (visible)
+const NZ = 2048;           // samples along the jet
+const ZMAX = 0.62;         // m simulated length
+const SOAP_SIGMA = 0.045;  // N/m dynamic surface tension with dish soap (ESTIMATE, see README)
+
+function waterProps(Tc){
+  const TK = Tc + 273.15, tau = 1 - TK/647.096;
+  const sigma = 0.2358*Math.pow(tau,1.256)*(1 - 0.625*tau);            // IAPWS 2014
+  const mu = 2.414e-5*Math.pow(10, 247.8/(TK - 140));                   // Vogel-type fit
+  const rho = 1000*(1 - (Tc+288.9414)/(508929.2*(Tc+68.12963))*(Tc-3.9863)**2); // Thiesen-type fit
+  return {sigma, mu, rho, nu: mu/rho};
+}
+
+const FACT = [1]; for(let i=1;i<40;i++) FACT[i]=FACT[i-1]*i;
+function besselI(n, x){       // modified Bessel function of the first kind, power series (x < ~5 here)
+  n = Math.abs(n);
+  let term = Math.pow(x/2, n)/FACT[n], s = 0;
+  const q = x*x/4;
+  for(let m=0; m<40; m++){ s += term; term *= q/((m+1)*(m+1+n)); if(term < 1e-17*s) break; }
+  return s;
+}
+// Rayleigh (1879) inviscid dispersion relation for non-axisymmetric mode n on a liquid column of radius a
+function omegaMode(n, a, k, sigma, rho){
+  const x = k*a;
+  let Gf;
+  if(x < 1e-6) Gf = n;
+  else Gf = x*0.5*(besselI(n-1,x)+besselI(n+1,x))/besselI(n,x);
+  return Math.sqrt(sigma/(rho*a*a*a)*Gf*(n*n - 1 + x*x));
+}
+// Steady pattern in the lab frame: the wave must be frozen, so k·U = ω(k). Lowest root by scan + bisection.
+function stationaryK(n, a, U, sigma, rho){
+  const g = k => k*U - omegaMode(n,a,k,sigma,rho);
+  let lo = omegaMode(n,a,0,sigma,rho)/U, hi = lo;
+  if(g(lo) >= 0) return lo;
+  for(let i=0;i<120 && hi*a < 8;i++){ lo = hi; hi *= 1.04; if(g(hi) >= 0) break; }
+  if(g(hi) < 0) return null;            // no frozen solution: capillary waves outrun the flow
+  for(let i=0;i<50;i++){ const m = 0.5*(lo+hi); if(g(m) < 0) lo = m; else hi = m; }
+  return 0.5*(lo+hi);
+}
+// Rayleigh–Plateau (n = 0) growth rate, inviscid
+function rpGrowth(a, k, sigma, rho){
+  const x = k*a;
+  if(x >= 1 || x <= 0) return 0;
+  return Math.sqrt(sigma/(rho*a*a*a)*x*(1 - x*x)*besselI(1,x)/besselI(0,x));
+}
+
+const P = { // user parameters
+  qLmin: 1.0, D: 8.0, ar: 1.25, e3: 0.015, e4: 0.01, rot: 20, Tc: 18, soap: false, noise: -4.3,
+  light: 0, card: false, dye: 0.35, ex: 1.8, az: 150, el: 10, win: 9, len: 35, ann: true, frz: false
+};
+const PRESETS = {
+  round:   {ar:1.00, e3:0,     e4:0},
+  tap:     {ar:1.25, e3:0.015, e4:0.01},
+  ellipse: {ar:1.45, e3:0,     e4:0},
+  tri:     {ar:1.00, e3:0.08,  e4:0},
+  square:  {ar:1.00, e3:0,     e4:0.08},
+  mix:     {ar:1.22, e3:0.04,  e4:0.03}
+};
+const qFromSlider = s => 0.1*Math.pow(60, s);        // 0.1 .. 6 L/min, log
+const sliderFromQ = q => Math.log(q/0.1)/Math.log(60);
+
+let M = null; // model results
+
+function compute(){
+  const W = waterProps(P.Tc);
+  const sigma = P.soap ? SOAP_SIGMA : W.sigma, rho = W.rho, nu = W.nu;
+  const Q = P.qLmin/60000;                 // m^3/s
+  const a0 = P.D/2000;                     // m
+  const U0 = Q/(Math.PI*a0*a0);
+  const eps0 = {2: (P.ar-1)/(P.ar+1), 3: P.e3, 4: P.e4};
+  const dz = ZMAX/(NZ-1);
+
+  const z = new Float64Array(NZ), U = new Float64Array(NZ), a = new Float64Array(NZ), T = new Float64Array(NZ);
+  for(let i=0;i<NZ;i++){
+    z[i] = i*dz;
+    U[i] = Math.sqrt(U0*U0 + 2*G*z[i]);       // free fall (Bernoulli, air drag neglected)
+    a[i] = a0*Math.sqrt(U0/U[i]);              // continuity
+    T[i] = (U[i]-U0)/G;                         // exact travel time for free fall
+  }
+  // shape modes n = 2,3,4
+  const modes = {};
+  const noRoot = {};
+  for(const n of [2,3,4]){
+    const k = new Float64Array(NZ), eps = new Float64Array(NZ), c = new Float64Array(NZ), phi = new Float64Array(NZ);
+    let ph = 0, damp = 0;
+    for(let i=0;i<NZ;i++){
+      const beta = 2*n*(n-1)*nu/(a[i]*a[i]);   // weak-viscosity damping rate of a 2-D column mode
+      if(i>0) damp += 0.5*(beta/U[i] + 2*(n-1)*n*nu/(a[i-1]*a[i-1])/U[i-1])*dz;
+      const e = eps0[n]*Math.pow(a[i]/a0, -0.25)*Math.exp(-damp);   // WKB (adiabatic) amplitude
+      let kk = stationaryK(n, a[i], U[i], sigma, rho);
+      if(!kk){ kk = omegaMode(n,a[i],0,sigma,rho)/U[i]; if(eps0[n] > 0.002) noRoot[n] = z[i]; }
+      if(n===2) kk /= Math.sqrt(1 + 37/24*e*e);   // Bohr (1909) finite-amplitude correction
+      k[i] = kk; eps[i] = e;
+      if(i>0) ph += 0.5*(k[i]+k[i-1])*dz;
+      phi[i] = ph; c[i] = e*Math.cos(ph);
+    }
+    modes[n] = {k, eps, c, phi, eps0: eps0[n]};
+  }
+  // Rayleigh–Plateau: a disturbance of fixed angular frequency w is convected down; local k = w/U(z)
+  const lnd0 = P.noise*Math.LN10;
+  const wOpt0 = 0.697/a0*U0;
+  let best = null;
+  const cand = [];
+  for(let j=0;j<40;j++) cand.push(wOpt0*Math.pow(10, -0.8 + 1.1*j/39));
+  for(const w of cand){
+    let ln = lnd0, zb = Infinity, sPrev = rpGrowth(a[0], w/U[0], sigma, rho)/U[0];
+    for(let i=1;i<NZ;i++){
+      const s = rpGrowth(a[i], w/U[i], sigma, rho)/U[i];
+      ln += 0.5*(s+sPrev)*dz; sPrev = s;
+      if(ln >= 0){ zb = z[i]; break; }
+    }
+    if(!best || zb < best.zb || (zb===Infinity && best.zb===Infinity && ln > best.ln)) best = {w, zb, ln};
+  }
+  const ws = [best.w*0.93, best.w, best.w*1.08];
+  const del = ws.map(()=>new Float64Array(NZ));
+  let zBreak = Infinity;
+  ws.forEach((w,j)=>{
+    let ln = lnd0 + (j===1?0:-0.4), sPrev = rpGrowth(a[0], w/U[0], sigma, rho)/U[0];
+    for(let i=0;i<NZ;i++){
+      if(i>0){ const s = rpGrowth(a[i], w/U[i], sigma, rho)/U[i]; ln += 0.5*(s+sPrev)*dz; sPrev = s; }
+      del[j][i] = Math.min(Math.exp(ln), 1.4);
+    }
+  });
+  for(let i=0;i<NZ;i++){ if(del[0][i]+del[1][i]+del[2][i] >= 1){ zBreak = z[i]; break; } }
+
+  // texture: row0 = a(mm), c2, c3, c4 ; row1 = d1, d2, d3, T(s)
+  const tex = new Float32Array(NZ*2*4);
+  let rb = 0;
+  for(let i=0;i<NZ;i++){
+    const o = i*4;
+    tex[o] = a[i]*1000; tex[o+1] = modes[2].c[i]; tex[o+2] = modes[3].c[i]; tex[o+3] = modes[4].c[i];
+    const o2 = (NZ+i)*4;
+    tex[o2] = del[0][i]; tex[o2+1] = del[1][i]; tex[o2+2] = del[2][i]; tex[o2+3] = T[i];
+    const ext = a[i]*1000*(1+Math.abs(modes[2].c[i])+Math.abs(modes[3].c[i])+Math.abs(modes[4].c[i]))*(1+del[0][i]+del[1][i]+del[2][i]);
+    if(ext>rb) rb = ext;
+  }
+  const f2 = omegaMode(2,a0,modes[2].k[0],sigma,rho)/(2*Math.PI);
+  const idx = zz => Math.min(NZ-1, Math.max(0, Math.round(zz/dz)));
+  M = {sigma, rho, nu, mu: W.mu, Q, a0, U0, eps0, z, U, a, T, modes, ws, del, zBreak, tex, rb: rb*1.02 + 0.05, dz, idx, f2,
+       Re: U0*2*a0/nu, We: rho*U0*U0*2*a0/sigma, Oh: W.mu/Math.sqrt(rho*sigma*2*a0),
+       psi: [0.7, 2.9, 5.1], noRoot};
+}
+
+// ======================================================================
+//  RENDERING (WebGL2 ray tracer)
+// ======================================================================
+const VS = `#version 300 es
+in vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
+const FS = `#version 300 es
+precision highp float;
+uniform sampler2D uData; uniform int uN; uniform float uZmax;
+uniform vec4 uVP; uniform float uZ0, uZ1, uAz, uEl, uTime, uRb, uDpx;
+uniform vec3 uTh, uW, uPsi, uAbs; uniform int uLight; uniform float uCard, uCardAz, uExp;
+out vec4 o;
+const float PI = 3.14159265;
+
+vec4 row(int r, float z){
+  float u = clamp(z/uZmax, 0., 1.)*float(uN-1);
+  int i = int(floor(u)); int j = min(i+1, uN-1); float f = u - float(i);
+  return mix(texelFetch(uData, ivec2(i,r), 0), texelFetch(uData, ivec2(j,r), 0), f);
+}
+float sdf(vec3 p){                         // > 0 outside the water, < 0 inside (approximately a distance near the surface)
+  if(p.z < 0. || p.z > uZmax) return 1.;
+  vec4 A = row(0, p.z); vec4 B = row(1, p.z);
+  float th = atan(p.y, p.x);
+  float c2 = A.y, c3 = A.z, c4 = A.w;
+  float shape = 1. + c2*cos(2.*(th-uTh.x)) + c3*cos(3.*(th-uTh.y)) + c4*cos(4.*(th-uTh.z));
+  shape /= sqrt(1. + 0.5*(c2*c2 + c3*c3 + c4*c4));       // keep cross-section area (second order)
+  float tt = uTime - B.w;
+  float v = 1. + B.x*cos(uW.x*tt + uPsi.x) + B.y*cos(uW.y*tt + uPsi.y) + B.z*cos(uW.z*tt + uPsi.z);
+  return length(p.xy) - A.x*shape*v;
+}
+vec3 grad(vec3 p){
+  float h = 0.012;
+  return normalize(vec3(sdf(p+vec3(h,0,0))-sdf(p-vec3(h,0,0)),
+                        sdf(p+vec3(0,h,0))-sdf(p-vec3(0,h,0)),
+                        sdf(p+vec3(0,0,h))-sdf(p-vec3(0,0,h))));
+}
+float box(float x, float a, float b, float s){ return smoothstep(a-s, a+s, x)*(1.-smoothstep(b-s, b+s, x)); }
+float adiff(float a, float b){ float d = mod(a-b+PI, 2.*PI)-PI; return d; }
+vec3 env(vec3 d){                           // room around the stream; world z points DOWN
+  float el = asin(clamp(-d.z,-1.,1.));      // elevation, up positive
+  float az = atan(d.y, d.x);
+  vec3 c;
+  if(uLight == 0){
+    c = mix(vec3(0.035,0.032,0.03), vec3(0.11,0.105,0.10), smoothstep(-0.6, 0.9, el));
+    float tile = max(box(fract(az*180./PI/9.), 0.0, 0.05, 0.01), box(fract(el*180./PI/9.), 0.0, 0.05, 0.01));
+    c *= 1. - 0.25*tile*(1.-smoothstep(0.3,0.6,el));
+    float wa = adiff(az, radians(115.));                      // window, back-left
+    float win = box(wa, -0.30, 0.30, 0.01)*box(el, -0.05, 0.6, 0.01);
+    float mull = max(box(abs(wa), -0.012, 0.012, 0.004), box(abs(el-0.27), -0.012, 0.012, 0.004));
+    c += win*(1.-mull)*vec3(1.35,1.45,1.6)*(0.85+0.3*smoothstep(-0.05,0.6,el));
+    float sa = adiff(az, radians(262.));                      // under-cabinet strip light, right
+    c += box(sa, -0.12, 0.12, 0.01)*box(el, -0.25, 0.65, 0.01)*vec3(2.6,2.4,2.1);
+    float pa = adiff(az, radians(200.));                      // ceiling light behind you
+    c += box(el, 0.18, 0.75, 0.03)*box(pa, -0.7, 0.7, 0.03)*vec3(1.6,1.55,1.45);
+  } else if(uLight == 1){
+    c = vec3(0.006) + 0.01*smoothstep(-0.3,0.8,el);
+    float a1 = adiff(az, radians(118.)), a2 = adiff(az, radians(258.));
+    float ev = box(el, -0.35, 1.0, 0.02);
+    c += ev*box(a1, -0.09, 0.09, 0.008)*vec3(5.0,4.4,3.6);
+    c += ev*box(a2, -0.09, 0.09, 0.008)*vec3(3.2,3.8,4.8);
+  } else {
+    c = vec3(0.02,0.022,0.025) + 0.03*smoothstep(-0.4,0.8,el);
+    float wa = adiff(az, radians(9.));
+    float win = box(wa, -0.40, 0.40, 0.015)*box(el, -0.25, 0.75, 0.015);
+    float mull = max(box(abs(wa), -0.01, 0.01, 0.004), box(abs(el-0.25), -0.01, 0.01, 0.004));
+    c += win*(1.-mull)*vec3(1.6,1.7,1.85)*(0.7+0.5*smoothstep(-0.25,0.75,el));
+  }
+  return c;
+}
+// Checkered card standing behind the stream: a real plane 40 mm behind the axis, so refraction displaces it
+vec3 scene(vec3 p, vec3 d){
+  if(uCard > 0.){
+    vec3 nc = vec3(cos(uCardAz), sin(uCardAz), 0.);
+    float dn = dot(d, nc);
+    if(dn > 1e-4){
+      float t = (40. - dot(p, nc))/dn;
+      if(t > 0.){
+        vec3 h = p + d*t;
+        float u = dot(h, vec3(-nc.y, nc.x, 0.));
+        if(abs(u) < 70. && h.z > -40. && h.z < uZmax){
+          vec2 g = floor(vec2(u, h.z)/3.);
+          float chk = mod(g.x + g.y, 2.);
+          vec2 f = abs(fract(vec2(u, h.z)/3.) - 0.5);
+          float edge = smoothstep(0.5, 0.47, max(f.x, f.y));
+          return uCard*mix(0.06, 0.85, mix(0.5, chk, edge))*vec3(1.0,0.98,0.95);
+        }
+      }
+    }
+  }
+  return env(d);
+}
+float fres(float ci, float n1, float n2){ float r0 = (n1-n2)/(n1+n2); r0*=r0; float x = 1.-clamp(ci,0.,1.); return r0 + (1.-r0)*x*x*x*x*x; }
+
+vec2 cyl(vec3 ro, vec3 rd, float R){
+  float A = dot(rd.xy, rd.xy), B = dot(ro.xy, rd.xy), C = dot(ro.xy, ro.xy) - R*R;
+  float D = B*B - A*C; if(D < 0. || A < 1e-9) return vec2(1.,-1.);
+  float s = sqrt(D); return vec2((-B - s)/A, (-B + s)/A);
+}
+bool marchIn(vec3 ro, vec3 rd, float t0, float t1, int steps, out float th){
+  float dt = (t1-t0)/float(steps); float tp = t0; float fp = sdf(ro+rd*t0);
+  for(int i=1;i<=128;i++){ if(i>steps) break;
+    float t = t0 + dt*float(i); float f = sdf(ro+rd*t);
+    if(fp > 0. && f <= 0.){ float lo = tp, hi = t;
+      for(int k=0;k<10;k++){ float m = 0.5*(lo+hi); if(sdf(ro+rd*m) > 0.) lo = m; else hi = m; }
+      th = hi; return true; }
+    tp = t; fp = f; }
+  return false;
+}
+bool marchOut(vec3 ro, vec3 rd, float t1, int steps, out float th){
+  float dt = t1/float(steps); float tp = 0.;
+  for(int i=1;i<=96;i++){ if(i>steps) break;
+    float t = dt*float(i);
+    if(sdf(ro+rd*t) > 0.){ float lo = tp, hi = t;
+      for(int k=0;k<10;k++){ float m = 0.5*(lo+hi); if(sdf(ro+rd*m) > 0.) hi = m; else lo = m; }
+      th = hi; return true; }
+    tp = t; }
+  return false;
+}
+vec3 tint(float L){ return exp(-(vec3(0.45,0.06,0.015)*0.001 + uAbs)*L); } // pure water + optional dye, per mm
+
+void main(){
+  vec2 px = gl_FragCoord.xy - uVP.xy;
+  float v = 1. - px.y/uVP.w;
+  float zs = mix(uZ0, uZ1, v);
+  float s = (px.x - 0.5*uVP.z)*uDpx;
+  float ce = cos(uEl), se = sin(uEl);
+  vec3 d = vec3(ce*cos(uAz), ce*sin(uAz), se);
+  vec3 r = vec3(-sin(uAz), cos(uAz), 0.);
+  vec3 dn = vec3(-se*cos(uAz), -se*sin(uAz), ce);
+  float zc = 0.5*(uZ0+uZ1);
+  vec3 ro = s*r + (zs-zc)*dn + vec3(0.,0.,zc);
+  vec3 col = scene(ro, d);
+  vec2 tc = cyl(ro, d, uRb);
+  if(tc.x < tc.y){
+    float th;
+    if(marchIn(ro, d, tc.x, tc.y, 56, th)){
+      vec3 p = ro + d*th; vec3 n = grad(p);
+      float ci = -dot(d,n);
+      if(ci < 0.){ n = -n; ci = -ci; }
+      float F = fres(ci, 1., N_IOR_);
+      vec3 cr = scene(p, reflect(d, n));
+      vec3 dt = refract(d, n, 1./N_IOR_);
+      vec3 ct = vec3(0.);
+      if(dot(dt,dt) > 0.){
+        vec2 c2 = cyl(p, dt, uRb);
+        float tmax = max(c2.y, 0.02);
+        float te;
+        if(marchOut(p + dt*0.003, dt, tmax, 40, te)){
+          vec3 q = p + dt*(te+0.003); vec3 n2 = grad(q);
+          float c2i = dot(dt, n2);
+          vec3 dout = refract(dt, -n2, N_IOR_);
+          vec3 cin;
+          if(dot(dout,dout) > 0.){
+            float F2 = fres(abs(c2i), N_IOR_, 1.);
+            cin = (1.-F2)*scene(q, dout) + F2*scene(q, reflect(dt, -n2))*0.5*tint(te);
+          } else cin = scene(q, reflect(dt, -n2))*0.6*tint(te);
+          ct = cin*tint(te);
+        } else ct = scene(p, dt);
+      }
+      col = F*cr + (1.-F)*ct;
+    }
+  }
+  col = 1. - exp(-col*uExp);
+  o = vec4(pow(col, vec3(1./2.2)), 1.);
+}`.replace(/N_IOR_/g, N_IOR.toFixed(3));
+
+const stage = document.getElementById('stage');
+const glc = document.getElementById('gl'), ovc = document.getElementById('ov');
+const ov = ovc.getContext('2d');
+let gl = null, prog, tex, uni = {}, glLost = false;
+function initGL(){
+  gl = glc.getContext('webgl2', {antialias:false, preserveDrawingBuffer:false, powerPreference:'high-performance'});
+  if(!gl){ document.getElementById('hint').textContent = 'WebGL2 is not available in this browser, so the ray-traced view cannot run.'; return; }
+  const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  uni = {};
+  for(const n of ['uData','uN','uZmax','uVP','uZ0','uZ1','uAz','uEl','uTime','uRb','uDpx','uTh','uW','uPsi','uLight','uAbs','uCard','uCardAz','uExp']) uni[n] = gl.getUniformLocation(prog, n);
+  tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if(M) uploadTex();
+}
+// If the GPU resets (heavy shader, sleep, driver), recover instead of leaving a dead canvas.
+glc.addEventListener('webglcontextlost', e => { e.preventDefault(); glLost = true; });
+glc.addEventListener('webglcontextrestored', () => { glLost = false; initGL(); markDirty(); });
+initGL();
+function uploadTex(){ if(!gl || glLost) return; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, NZ, 2, 0, gl.RGBA, gl.FLOAT, M.tex); markDirty(); }
+
+// The ray tracer only redraws when something changed (or breakup ripples are on screen),
+// and draws at reduced resolution while you are dragging, so the GPU is never flooded.
+let DPR = 1, Wpx = 0, Hpx = 0, gScale = 1, dirty = true, lastInteract = -1e9;
+const OVW = 92; // css px width of the overview strip
+let zTop = -0.012;   // m, top of close-up window
+function markDirty(){ dirty = true; }
+function interacting(){ lastInteract = performance.now(); dirty = true; }
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const r = stage.getBoundingClientRect();
+  Wpx = Math.round(r.width*DPR); Hpx = Math.round(r.height*DPR);
+  ovc.width = Wpx; ovc.height = Hpx;
+  setGLScale(gScale, true);
+}
+function setGLScale(q, force){
+  if(q === gScale && !force) return;
+  gScale = q;
+  const w = Math.max(1, Math.round(Wpx*q)), h = Math.max(1, Math.round(Hpx*q));
+  if(glc.width !== w || glc.height !== h){ glc.width = w; glc.height = h; }
+  dirty = true;
+}
+function layout(){
+  const ow = Math.round(OVW*DPR), gap = Math.round(10*DPR);
+  return {ov: {x:0, y:0, w:ow, h:Hpx}, cu: {x:ow+gap, y:0, w:Wpx-ow-gap, h:Hpx}};
+}
+let tSim = 0, lastT = performance.now();
+function drawView(vp, z0, z1){
+  const q = glc.height/Hpx;
+  const x = Math.round(vp.x*q), w = Math.round(vp.w*q), h = Math.round(vp.h*q), y = glc.height - Math.round(vp.y*q) - h;
+  gl.viewport(x, y, w, h); gl.scissor(x, y, w, h);
+  gl.uniform4f(uni.uVP, x, y, w, h);
+  gl.uniform1f(uni.uZ0, z0*1000); gl.uniform1f(uni.uZ1, z1*1000);
+  gl.uniform1f(uni.uDpx, (z1-z0)*1000/h);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function ripplesVisible(){
+  if(P.frz || !M) return false;
+  const i0 = M.idx(Math.max(0, zTop)), i1 = M.idx(Math.max(zTop + P.win/100, P.len/100));
+  for(let i=i1;i>=i0;i-=8) if(M.del[1][i] > 0.004) return true;
+  return false;
+}
+const LIGHT_CARD = [1.0, 0.22, 1.3];
+function frame(now){
+  const dt = Math.min(0.05, (now-lastT)/1000); lastT = now;
+  const moving = ripplesVisible();
+  if(moving) tSim += dt;
+  const busy = now - lastInteract < 250;
+  setGLScale(busy ? 0.5 : (DPR > 1.5 ? 0.75 : 1));
+  if(gl && !glLost && M && (dirty || moving)){
+    dirty = false;
+    const L = layout();
+    gl.enable(gl.SCISSOR_TEST);
+    gl.clearColor(0.05,0.06,0.07,1); gl.scissor(0,0,glc.width,glc.height); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(uni.uData, 0); gl.uniform1i(uni.uN, NZ); gl.uniform1f(uni.uZmax, ZMAX*1000);
+    gl.uniform1f(uni.uAz, P.az*Math.PI/180); gl.uniform1f(uni.uEl, P.el*Math.PI/180);
+    gl.uniform1f(uni.uTime, tSim); gl.uniform1f(uni.uRb, M.rb);
+    const r = P.rot*Math.PI/180;
+    gl.uniform3f(uni.uTh, r, r + 0.3, r + 0.15);
+    gl.uniform3f(uni.uW, M.ws[0], M.ws[1], M.ws[2]); gl.uniform3f(uni.uPsi, M.psi[0], M.psi[1], M.psi[2]);
+    gl.uniform1i(uni.uLight, P.light);
+    gl.uniform3f(uni.uAbs, P.dye*0.35, P.dye*0.20, P.dye*0.04);
+    gl.uniform1f(uni.uCard, P.card ? LIGHT_CARD[P.light] : 0); gl.uniform1f(uni.uCardAz, 150*Math.PI/180);
+    gl.uniform1f(uni.uExp, P.ex);
+    drawView(L.ov, -0.004, P.len/100);
+    drawView(L.cu, zTop, zTop + P.win/100);
+  }
+  drawOverlay();
+  requestAnimationFrame(frame);
+}
+
+// ---------------- overlay: spout, scale bar, nodes, window -------------
+function drawSpout(vp, z0, z1){
+  const mmpx = (z1-z0)*1000/vp.h;
+  const yOf = zm => vp.y + (zm/1000 - z0)/(z1-z0)*vp.h;
+  const y0 = yOf(0); if(y0 < vp.y) return;
+  const cx = vp.x + vp.w/2, rOut = (P.D/2 + 1.6)/mmpx, rIn = (P.D/2)/mmpx;
+  const top = Math.max(vp.y, yOf(-60));
+  const g = ov.createLinearGradient(cx-rOut, 0, cx+rOut, 0);
+  g.addColorStop(0,'#2a2f35'); g.addColorStop(0.25,'#c9d1d9'); g.addColorStop(0.42,'#6b747e'); g.addColorStop(0.7,'#9aa4ae'); g.addColorStop(1,'#1d2126');
+  ov.fillStyle = g; ov.fillRect(cx-rOut, top, 2*rOut, y0-top);
+  ov.fillStyle = '#0b0d10'; ov.fillRect(cx-rIn, y0-Math.max(1, 0.8/mmpx), 2*rIn, Math.max(1,0.8/mmpx));
+}
+function drawOverlay(){
+  ov.clearRect(0,0,Wpx,Hpx);
+  if(!M) return;
+  const L = layout(), cu = L.cu, o = L.ov;
+  drawSpout(o, -0.004, P.len/100);
+  drawSpout(cu, zTop, zTop+P.win/100);
+  ov.font = `${11*DPR}px ui-sans-serif,system-ui,sans-serif`;
+  // overview window rectangle
+  const yo = z => o.y + (z+0.004)/(P.len/100+0.004)*o.h;
+  ov.strokeStyle = 'rgba(111,195,255,.9)'; ov.lineWidth = 1.5*DPR;
+  ov.strokeRect(o.x+2*DPR, yo(zTop), o.w-4*DPR, yo(zTop+P.win/100)-yo(zTop));
+  if(isFinite(M.zBreak) && M.zBreak < P.len/100){
+    ov.setLineDash([4*DPR,4*DPR]); ov.strokeStyle='rgba(255,177,92,.8)';
+    ov.beginPath(); ov.moveTo(o.x, yo(M.zBreak)); ov.lineTo(o.x+o.w, yo(M.zBreak)); ov.stroke(); ov.setLineDash([]);
+  }
+  ov.fillStyle = 'rgba(200,210,220,.75)';
+  for(let c=10;c<P.len;c+=10){ const y = yo(c/100); ov.fillRect(o.x, y, 5*DPR, 1*DPR); ov.fillText(c+'cm', o.x+7*DPR, y+4*DPR); }
+  // close-up annotations
+  const z0 = zTop, z1 = zTop + P.win/100;
+  const yc = z => cu.y + (z - z0)/(z1-z0)*cu.h;
+  const mmpx = (z1-z0)*1000/cu.h;
+  // scale bar 1 cm
+  const bx = cu.x + 18*DPR, by = cu.y + cu.h - 22*DPR, bl = 10/mmpx;
+  ov.fillStyle = 'rgba(230,235,240,.85)'; ov.fillRect(bx, by, bl, 2*DPR);
+  ov.fillText('1 cm (true scale, no stretch)', bx, by - 6*DPR);
+  ov.fillText(`${(z0*100).toFixed(1)} cm below spout`, cu.x + 18*DPR, cu.y + 18*DPR);
+  ov.fillText(`${(z1*100).toFixed(1)} cm`, cu.x + 18*DPR, cu.y + cu.h - 40*DPR);
+  if(P.ann){
+    const m = M.modes[2];
+    const cx = cu.x + cu.w/2;
+    const i0 = Math.max(1, M.idx(Math.max(z0,0))), i1 = M.idx(z1);
+    let anyMode = m.eps0 > 0.002 ? m : (M.modes[3].eps0>0.002 ? M.modes[3] : (M.modes[4].eps0>0.002 ? M.modes[4] : null));
+    if(anyMode){
+      for(let i=i0;i<=i1;i++){
+        const a = anyMode.c[i-1], b = anyMode.c[i];
+        if((a>0) !== (b>0)){
+          const y = yc(M.z[i]); const rpx = M.a[i]*1000/mmpx;
+          ov.strokeStyle = 'rgba(111,195,255,.55)'; ov.lineWidth = 1*DPR;
+          ov.beginPath(); ov.moveTo(cx + rpx + 10*DPR, y); ov.lineTo(cx + rpx + 34*DPR, y); ov.stroke();
+          ov.fillStyle = 'rgba(111,195,255,.8)'; ov.fillText('round', cx + rpx + 38*DPR, y + 4*DPR);
+        }
+      }
+    }
+  }
+  if(probeZ !== null){
+    const y = yc(probeZ); ov.strokeStyle = 'rgba(255,255,255,.18)'; ov.lineWidth = 1*DPR;
+    ov.beginPath(); ov.moveTo(cu.x, y); ov.lineTo(cu.x+cu.w, y); ov.stroke();
+  }
+}
+
+// ======================================================================
+//  UI
+// ======================================================================
+const $ = id => document.getElementById(id);
+const fmt = (x, d=2) => Number.isFinite(x) ? x.toFixed(d) : '—';
+function syncInputs(){
+  $('q').value = sliderFromQ(P.qLmin); $('d').value = P.D; $('e2').value = P.ar; $('e3').value = P.e3; $('e4').value = P.e4;
+  $('rot').value = P.rot; $('tc').value = P.Tc; $('soap').checked = P.soap; $('nz').value = P.noise;
+  $('lt').value = P.light; $('card').checked = P.card; $('dye').value = P.dye; $('ex').value = P.ex; $('az').value = P.az; $('el').value = P.el; $('win').value = P.win; $('len').value = P.len;
+  $('ann').checked = P.ann; $('frz').checked = P.frz;
+}
+function labels(){
+  $('qo').textContent = P.qLmin.toFixed(P.qLmin<1?2:1) + ' L/min';
+  $('do').textContent = P.D.toFixed(1) + ' mm';
+  $('e2o').textContent = P.ar.toFixed(3); $('e3o').textContent = P.e3.toFixed(3); $('e4o').textContent = P.e4.toFixed(3);
+  $('roto').textContent = P.rot + '°'; $('tco').textContent = P.Tc + ' °C';
+  $('nzo').textContent = '10^' + P.noise.toFixed(1);
+  $('dyeo').textContent = P.dye ? Math.round(P.dye*100)+' %' : 'none'; $('exo').textContent = P.ex.toFixed(2);
+  $('azo').textContent = P.az + '°'; $('elo').textContent = P.el + '°';
+  $('wino').textContent = P.win + ' cm'; $('leno').textContent = P.len + ' cm';
+}
+function readouts(){
+  const m2 = M.modes[2];
+  const lam = (n, zz) => 2*Math.PI/M.modes[n].k[M.idx(zz)]*100;
+  const rows = [
+    ['Exit speed U₀', fmt(M.U0,2)+' m/s'],
+    ['Speed 30 cm down', fmt(M.U[M.idx(0.3)],2)+' m/s'],
+    ['Jet radius at spout / 30 cm', fmt(M.a0*1000,2)+' / '+fmt(M.a[M.idx(0.3)]*1000,2)+' mm'],
+    ['Surface tension σ', fmt(M.sigma*1000,1)+' mN/m'+(P.soap?' (est.)':'')],
+    ['Oval wobble frequency f₂ (spout)', fmt(M.f2,1)+' Hz'],
+    ['X spacing λ₂ at spout', fmt(lam(2,0),2)+' cm'],
+    ['X spacing λ₂ 10 cm / 30 cm down', fmt(lam(2,0.1),2)+' / '+fmt(lam(2,0.3),2)+' cm'],
+    ['Bohr amplitude correction', '+'+fmt((Math.sqrt(1+37/24*m2.eps0*m2.eps0)-1)*100,2)+' % λ'],
+    ['Reynolds number (spout)', fmt(M.Re,0)],
+    ['Weber number (spout)', fmt(M.We,1)],
+    ['Ohnesorge number', fmt(M.Oh,4)],
+    ['Breakup into drops (estimate)', isFinite(M.zBreak) ? fmt(M.zBreak*100,0)+' cm' : '> '+(ZMAX*100).toFixed(0)+' cm'],
+  ];
+  $('read').innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  const w = [];
+  if(M.Re > 4000) w.push('Reynolds number above ~4000: a real spout this fast is likely turbulent, which roughens the surface and smears the X lines. The model assumes a smooth (laminar) jet.');
+  const nm = {2:'oval',3:'triangular',4:'square'};
+  for(const n in M.noRoot) w.push(`The ${nm[n]} wave has no frozen (steady) solution for the first ${(M.noRoot[n]*100).toFixed(1)} cm: the water is still slower than that ripple's own speed, so k·U = ω(k) has no root and the pattern there would not stand still. The long-wave value is drawn there instead.`);
+  if(M.We < 4) w.push('Weber number below ~4: a real tap this slow tends to drip rather than form a continuous jet (rule of thumb, estimate).');
+  if(m2.eps0 > 0.18) w.push('Oval deformation is large (>18 %): linear theory plus Bohr\'s correction is becoming approximate.');
+  if(Math.max(M.modes[2].eps0, M.modes[3].eps0, M.modes[4].eps0) < 0.002) w.push('A perfectly round spout gives no shape wave at all, so no X. Only the breakup ripples remain.');
+  $('warns').innerHTML = w.map(t=>`<div class="warn">${t}</div>`).join('');
+}
+
+// ---------------- plots ----------------
+function drawPlots(){
+  const c = $('plot'), x = c.getContext('2d');
+  const W = c.clientWidth*DPR, H = 300*DPR;
+  c.width = W; c.height = H;
+  x.clearRect(0,0,W,H);
+  x.font = `${10.5*DPR}px ui-sans-serif,system-ui,sans-serif`;
+  const L = P.len/100, pad = 34*DPR, padR = 8*DPR;
+  const iMax = M.idx(L);
+  const X = z => pad + z/L*(W-pad-padR);
+  const panels = [{h0:0.02, h1:0.27}, {h0:0.31, h1:0.62}, {h0:0.66, h1:0.92}];
+  const band = (p) => [p.h0*H+6*DPR, p.h1*H];
+  // window band + breakup
+  for(const p of panels){
+    const [y0,y1] = band(p);
+    x.fillStyle = 'rgba(111,195,255,.08)';
+    x.fillRect(X(Math.max(0,zTop)), y0, X(Math.min(L, zTop+P.win/100))-X(Math.max(0,zTop)), y1-y0);
+    if(isFinite(M.zBreak) && M.zBreak < L){ x.strokeStyle='rgba(255,177,92,.7)'; x.setLineDash([3*DPR,3*DPR]);
+      x.beginPath(); x.moveTo(X(M.zBreak),y0); x.lineTo(X(M.zBreak),y1); x.stroke(); x.setLineDash([]); }
+    x.strokeStyle = '#2a333d'; x.beginPath(); x.moveTo(pad,y1); x.lineTo(W-padR,y1); x.stroke();
+  }
+  const line = (arr, p, lo, hi, color, lbl) => {
+    const [y0,y1] = [p.h0*H+6*DPR, p.h1*H];
+    const Y = v => y1 - (v-lo)/(hi-lo)*(y1-y0);
+    x.strokeStyle = color; x.lineWidth = 1.5*DPR; x.beginPath();
+    for(let i=0;i<=iMax;i+=2){ const v = arr(i); i? x.lineTo(X(M.z[i]),Y(v)) : x.moveTo(X(M.z[i]),Y(v)); }
+    x.stroke();
+    return Y;
+  };
+  const axisText = (p, lo, hi, unit, title) => {
+    const [y0,y1] = [p.h0*H+6*DPR, p.h1*H];
+    x.fillStyle = '#8b97a4'; x.textAlign='right';
+    x.fillText(hi.toPrecision(2), pad-4*DPR, y0+8*DPR); x.fillText(lo.toPrecision(2), pad-4*DPR, y1);
+    x.textAlign='left'; x.fillStyle='#c5cdd6'; x.fillText(title+' ('+unit+')', pad+4*DPR, y0+8*DPR);
+  };
+  // panel 1: radius
+  const aMax = M.a0*1000*1.05;
+  line(i=>M.a[i]*1000, panels[0], 0, aMax, '#d9d2c2');
+  axisText(panels[0], 0, aMax, 'mm', 'jet radius a');
+  // panel 2: wavelengths
+  const act = [2,3,4].filter(n=>M.modes[n].eps0>0.002);
+  let lmax = 0.1; for(const n of act) lmax = Math.max(lmax, 2*Math.PI/M.modes[n].k[iMax]*100);
+  const col = {2:'#6fc3ff',3:'#ff8fb1',4:'#b9e27a'};
+  for(const n of act) line(i=>2*Math.PI/M.modes[n].k[i]*100, panels[1], 0, lmax*1.08, col[n]);
+  axisText(panels[1], 0, lmax*1.08, 'cm', 'local wavelength λₙ');
+  let lx = W - padR - 4*DPR; x.textAlign='right';
+  for(const n of act.slice().reverse()){ x.fillStyle = col[n]; x.fillText({2:'oval',3:'triangle',4:'square'}[n], lx, panels[1].h0*H+18*DPR); lx -= 52*DPR; }
+  x.textAlign='left';
+  // panel 3: deformation c_n(z)
+  let emax = 0.02; for(const n of act) for(let i=0;i<=iMax;i++) emax = Math.max(emax, M.modes[n].eps[i]);
+  for(const n of act) line(i=>M.modes[n].c[i], panels[2], -emax*1.1, emax*1.1, col[n]);
+  axisText(panels[2], -emax*1.1, emax*1.1, 'fraction of radius', 'shape deformation εₙ cos φₙ');
+  // x axis
+  x.fillStyle = '#8b97a4'; x.textAlign='center';
+  for(let cm=0; cm<=P.len; cm+= (P.len>30?10:5)) x.fillText(cm+' cm', X(cm/100), H-4*DPR);
+  x.textAlign='left';
+}
+
+// ---------------- cross-section probe ----------------
+let probeZ = null;
+function drawXsec(){
+  const c = $('xsec'), x = c.getContext('2d'); const W = c.width, H = c.height;
+  x.clearRect(0,0,W,H); x.fillStyle = '#0f1318'; x.fillRect(0,0,W,H);
+  const zz = probeZ === null ? Math.max(0, zTop + P.win/200) : probeZ;
+  if(zz < 0){ x.fillStyle='#8b97a4'; x.font='22px sans-serif'; x.fillText('inside spout', 70, 150); return; }
+  const i = M.idx(zz), a = M.a[i]*1000;
+  const c2 = M.modes[2].c[i], c3 = M.modes[3].c[i], c4 = M.modes[4].c[i];
+  const r0 = P.rot*Math.PI/180, th = [r0, r0+0.3, r0+0.15];
+  const norm = Math.sqrt(1 + 0.5*(c2*c2+c3*c3+c4*c4));
+  const S = 0.62*W/2/(M.a0*1000*1.25);
+  const sc = 0.62*W/2/(a*1.35);
+  x.save(); x.translate(W/2, H/2);
+  x.setLineDash([5,5]); x.strokeStyle='rgba(200,210,220,.35)'; x.lineWidth=1.5;
+  x.beginPath(); x.arc(0,0,a*sc,0,2*Math.PI); x.stroke(); x.setLineDash([]);
+  x.beginPath();
+  for(let k=0;k<=240;k++){
+    const t = k/240*2*Math.PI;
+    const R = a*(1 + c2*Math.cos(2*(t-th[0])) + c3*Math.cos(3*(t-th[1])) + c4*Math.cos(4*(t-th[2])))/norm;
+    const px = R*Math.cos(t)*sc, py = -R*Math.sin(t)*sc;   // world y up on screen
+    k ? x.lineTo(px,py) : x.moveTo(px,py);
+  }
+  x.closePath(); x.fillStyle='rgba(111,195,255,.22)'; x.fill(); x.strokeStyle='#6fc3ff'; x.lineWidth=2.5; x.stroke();
+  // view direction arrow (camera looks along +d)
+  const az = P.az*Math.PI/180, dx = Math.cos(az), dy = -Math.sin(az);
+  x.strokeStyle='#e6ebf0'; x.fillStyle='#e6ebf0'; x.lineWidth=2;
+  const L0 = 0.98*W/2, L1 = 0.72*W/2;
+  x.beginPath(); x.moveTo(-dx*L0, -dy*L0); x.lineTo(-dx*L1, -dy*L1); x.stroke();
+  x.beginPath(); x.arc(-dx*L0, -dy*L0, 6, 0, 2*Math.PI); x.fill();
+  x.restore();
+  x.fillStyle='#8b97a4'; x.font='20px ui-sans-serif,system-ui,sans-serif';
+  x.fillText(`${(zz*100).toFixed(1)} cm down`, 10, 26);
+  x.fillText(`a = ${a.toFixed(2)} mm`, 10, H-12);
+  $('xsnote').textContent = `Slice ${(zz*100).toFixed(1)} cm below the spout. Shape magnified to fill the box (true radius ${a.toFixed(2)} mm). The eye marks where you stand. The dashed circle is a round jet with the same area.`;
+}
+
+// ---------------- events ----------------
+function full(){ compute(); uploadTex(); labels(); readouts(); drawPlots(); drawXsec(); }
+function bind(id, key, conv=parseFloat, recompute=true){
+  $(id).addEventListener('input', e => {
+    P[key] = conv(e.target.type==='checkbox' ? e.target.checked : e.target.value);
+    interacting();
+    if(recompute) full(); else { labels(); drawPlots(); drawXsec(); }
+  });
+}
+bind('q','qLmin', v=>qFromSlider(parseFloat(v)));
+bind('d','D'); bind('e2','ar'); bind('e3','e3'); bind('e4','e4'); bind('rot','rot', v=>parseInt(v), false);
+bind('tc','Tc', v=>parseInt(v)); bind('soap','soap', v=>!!v); bind('nz','noise');
+bind('lt','light', v=>parseInt(v), false); bind('card','card', v=>!!v, false); bind('dye','dye', parseFloat, false); bind('ex','ex', parseFloat, false); bind('az','az', v=>parseInt(v), false); bind('el','el', v=>parseInt(v), false);
+bind('win','win', parseFloat, false); bind('len','len', v=>parseInt(v), false);
+bind('ann','ann', v=>!!v, false); bind('frz','frz', v=>!!v, false);
+document.querySelectorAll('#shapes button').forEach(b => b.addEventListener('click', () => {
+  Object.assign(P, PRESETS[b.dataset.p]); syncInputs(); full(); interacting();
+}));
+
+let drag = null;
+stage.addEventListener('pointerdown', e => {
+  const r = stage.getBoundingClientRect(); const xC = e.clientX - r.left, yC = e.clientY - r.top;
+  if(xC < OVW){ jumpTo(yC, r.height); drag = {mode:'ov', h:r.height}; }
+  else drag = {mode:'cu', x:e.clientX, y:e.clientY, az:P.az, zt:zTop, h:r.height};
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove', e => {
+  const r = stage.getBoundingClientRect(); const xC = e.clientX - r.left, yC = e.clientY - r.top;
+  if(xC >= OVW) { probeZ = zTop + yC/r.height*P.win/100; drawXsec(); }
+  if(!drag) return;
+  if(drag.mode==='ov'){ jumpTo(yC, drag.h); return; }
+  P.az = Math.round(((drag.az - (e.clientX - drag.x)*0.4) % 360 + 360) % 360); $('az').value = P.az;
+  setTop(drag.zt - (e.clientY - drag.y)/drag.h*P.win/100);
+  labels();
+});
+stage.addEventListener('pointerup', () => drag = null);
+stage.addEventListener('pointerleave', () => { probeZ = null; drawXsec(); });
+stage.addEventListener('wheel', e => { e.preventDefault(); setTop(zTop + e.deltaY*0.00005*P.win); }, {passive:false});
+function setTop(z){ zTop = Math.max(-0.015, Math.min(ZMAX - P.win/100, z)); interacting(); drawPlots(); }
+function jumpTo(yC, h){ const z = -0.004 + yC/h*(P.len/100+0.004); setTop(z - P.win/200); drawXsec(); }
+
+window.addEventListener('resize', () => { resize(); drawPlots(); markDirty(); });
+syncInputs(); resize(); full(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -5,15 +5,15 @@
 **Observation (Hanji):** a smooth stream from a tap shows alternating X-shaped lines along its length.
 ([r/askscience thread](https://www.reddit.com/r/askscience/comments/34ne9l/what_causes_x_shaped_lines_on_the_stream_when_i/))
 
-**Piece:** one self-contained HTML file (index.html). It needs a browser with WebGL2. Everything works offline except the Alegreya web font, which falls back to Georgia.
+**Piece:** one self-contained HTML file (index.html). It needs a browser with WebGL2. Everything works offline except the Newsreader web font, which falls back to Georgia.
 
 ## What you see
 
-A calm sage page with a single stream of water, ray-traced at true scale and lit by morning light.
-- **Water from a { round / everyday / oval / three-cornered / square } spout**: pick the spout. The icons show each shape, with the out-of-round part drawn 3× bigger so it is visible at icon size.
-- **running { a trickle / gently / steadily / briskly }**: 0.6, 1.0, 1.6 or 2.4 L/min through an 8 mm bore.
-- **Drag sideways** to walk around the stream.
-- The hairline beside the water is the wobble itself, at the same heights as the stream. Its sign flips at every node.
+A soft yellow page in six quiet sections around one stream of water. The stream is ray-traced at true scale and lit by morning light.
+- **Spout**: Round, Everyday, Oval, Three-cornered or Square. The icons draw each opening with the out-of-round part 3× bigger so it shows at icon size.
+- **Flow**: Trickle, Gentle, Steady or Brisk (0.6, 1.0, 1.6 or 2.4 L/min through an 8 mm bore).
+- **Drag sideways** to walk around the stream. The water moves slightly, from a small tap flicker carried down at the water's own speed.
+- The hairline beside the water is the wobble itself, drawn at the same heights as the stream.
 - **How it works** opens a second page with a short explanation, a chart, and expandable sections: numbers for the current stream, equations, constants, estimates and sources.
 
 ## Why the X appears
@@ -57,9 +57,9 @@ The surface is `R(θ,z) = a(z) · [1 + Σₙ cₙ(z) cos n(θ − θₙ)] / √(
 ### 4. Optics (every pixel)
 - Orthographic camera, rays hit the exact surface R(θ,z,t) (ray march + bisection). The normal is the numerical gradient of `|r| − R`, which includes the slope dR/dz. That slope is what tilts the highlights.
 - **Snell refraction** in and out, **Fresnel reflection** (Schlick approximation), total internal reflection, n = 1.333.
-- Light comes from a simple room at infinity: sage walls matching the page, a shadowed basin below, a low morning sun front-right of the viewer, a window with mullions behind the stream and a soft ceiling light. The room is invented; the optics is not. Where a ray misses the water the canvas is transparent, so the page colour shows through.
+- Light comes from a simple room at infinity: pale yellow walls matching the page, a shadowed basin below, a low morning sun front-right of the viewer, a window with mullions behind the stream and a soft ceiling light. The room is invented; the optics is not. Where a ray misses the water the canvas is transparent, so the page colour shows through.
 - Water absorption per mm is included but negligible at this size, which is why a clean stream is so hard to see.
-- **Food dye** (always on, 35 %) adds Beer–Lambert absorption along each ray's path inside the water, `exp(−α L)` with α = dye × (0.35, 0.20, 0.04) per mm for red, green, blue (a blue dye; the coefficients are illustrative, not a measured dye). Thicker parts of the stream look darker, so the shape reads at a glance.
+- **Food dye** (always on, 80 %) adds Beer–Lambert absorption along each ray's path inside the water, `exp(−α L)` with α = dye × (0.35, 0.20, 0.04) per mm for red, green, blue (a blue dye; the coefficients are illustrative, not a measured dye). Thicker parts of the stream look darker, so the shape reads at a glance.
 - Performance: the image redraws only when something changes (or while breakup ripples are on screen), at half resolution while you drag. If the GPU resets, the page rebuilds the renderer instead of going blank.
 
 ### Constants
@@ -81,6 +81,7 @@ The surface is `R(θ,z) = a(z) · [1 + Σₙ cₙ(z) cos n(θ − θₙ)] / √(
 - **Breakup:** linear growth, stretching effects on the ripple amplitude ignored, starting noise level is assumed (no real data). Drops after pinch-off are drawn schematically (the linear surface simply goes through zero).
 - **Air drag** and the air's own effect on the waves are neglected (fine below a few m/s).
 - **Room lighting and dye** are invented, to make clear water visible. Only the geometry and optics are computed.
+- **Motion** is an invented tap flicker: the wobble amplitude is multiplied by 1 + 0.10 sin(2π·1.1 Hz·t′) + 0.05 sin(2π·5.5 Hz·t′ + 1.3), with t′ = t − T(z) so the flicker is carried down at the water's speed. The X spacing does not change.
 - Fixed settings: 8 mm bore, 18 °C clean water, spout rotated 20°, tap vibration 10^−4.3 of the radius.
 
 ## References

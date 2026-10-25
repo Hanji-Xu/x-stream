@@ -6,69 +6,72 @@
 <title>X Stream</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <style>
-:root{ --sage:#a2ad84; --cream:#f4f1e4; --soft:rgba(244,241,228,.55); --faint:rgba(244,241,228,.28); }
+:root{ --paper:#f6efc8; --ink:#2f2b20; --mute:rgba(47,43,32,.58); --faint:rgba(47,43,32,.16); }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--sage);color:var(--cream);
-  font:15px/1.5 "Alegreya", Georgia, "Times New Roman", serif;-webkit-font-smoothing:antialiased}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);
+  font:16px/1.5 "Newsreader", Georgia, "Times New Roman", serif;-webkit-font-smoothing:antialiased}
 [hidden]{display:none!important}
-button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
-.caps{letter-spacing:.22em;text-transform:uppercase;font-size:13px}
-.it{font-style:italic}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.label{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 10px}
 
-/* ---------- the piece ---------- */
+/* ---------- the piece: six sections around the water ---------- */
 #piece{position:fixed;inset:0;overflow:hidden}
 #gl,#ov{position:absolute;inset:0;width:100%;height:100%;display:block}
 #gl{cursor:ew-resize;touch-action:none}
 #ov{pointer-events:none}
-.corner{position:absolute;z-index:2}
-.tl{top:32px;left:38px} .tr{top:32px;right:38px;text-align:right} .bl{bottom:34px;left:38px} .br{bottom:34px;right:38px;text-align:right}
-.ml{top:50%;left:38px;transform:translateY(-50%)} .mr{top:50%;right:38px;transform:translateY(-50%)}
-.tl .it{font-size:13px;opacity:.9} .tl .caps{margin-top:6px}
-.brace{display:flex;align-items:center;gap:10px;font-size:14px}
-.brace .b{font-size:46px;line-height:1;font-weight:300;opacity:.75;transform:scaleX(.55)}
-.brace ul{list-style:none;margin:0;padding:0;text-align:center}
-.mr .brace ul{text-align:right}
-.brace li button{display:inline-flex;align-items:center;gap:7px;padding:1px 0;opacity:.45;transition:opacity .2s}
-.brace li button:hover{opacity:.8}
-.brace li button.on{opacity:1}
-.brace svg{width:15px;height:15px;overflow:visible}
-.bl p{margin:0;font-style:italic;font-size:13.5px;line-height:1.45}
-.br p{margin:0;font-style:italic;font-size:13.5px;line-height:1.45}
-.link{border-bottom:1px solid var(--faint);padding-bottom:1px}
-.link:hover{border-color:var(--cream)}
+.grid{position:absolute;inset:0;display:grid;grid-template-columns:minmax(220px,300px) 1fr minmax(220px,300px);
+  grid-template-rows:auto 1fr auto;padding:40px 48px;pointer-events:none}
+.grid > div{pointer-events:auto}
+.s1{grid-column:1;grid-row:1} .s2{grid-column:3;grid-row:1;justify-self:end;text-align:right}
+.s3{grid-column:1;grid-row:2;align-self:center} .s4{grid-column:3;grid-row:2;align-self:center;justify-self:end}
+.s5{grid-column:1;grid-row:3;align-self:end} .s6{grid-column:3;grid-row:3;align-self:end;justify-self:end;text-align:right}
+h1{font-weight:400;font-size:34px;line-height:1.05;margin:0;letter-spacing:-.01em}
+.sub{margin:8px 0 0;color:var(--mute);font-style:italic}
+.picks{list-style:none;margin:0;padding:0}
+.picks li button{display:flex;align-items:center;gap:10px;padding:4px 0;color:var(--mute);transition:color .15s}
+.picks li button:hover{color:var(--ink)}
+.picks li button.on{color:var(--ink)}
+.picks li button.on span{border-bottom:1px solid var(--ink)}
+.picks svg{width:16px;height:16px;overflow:visible;flex:none}
+.s4 .label{text-align:left}
+.s5 p,.s6 p{margin:0;font-size:15px;line-height:1.5}
+.s5 p{max-width:270px}
+.hint{color:var(--mute);font-style:italic;font-size:14px;margin-top:6px}
+.link{border-bottom:1px solid var(--faint);padding-bottom:1px;font-size:15px}
+.link:hover{border-color:var(--ink)}
 
 /* ---------- how it works ---------- */
-#physics{min-height:100%;padding:32px 38px 80px}
-#physics header{display:flex;justify-content:space-between;align-items:flex-start}
-#physics article{max-width:640px;margin:70px auto 0}
-#physics h1{font-weight:400;font-size:30px;margin:0 0 22px;letter-spacing:.01em}
-#physics p{margin:0 0 14px;font-size:16px}
+#physics{min-height:100%;padding:40px 48px 80px}
+#physics header{display:flex;justify-content:space-between;align-items:baseline}
+#physics header .t{font-size:22px}
+#physics article{max-width:640px;margin:64px auto 0}
+#physics h2{font-weight:400;font-size:32px;margin:0 0 22px;letter-spacing:-.01em}
+#physics p{margin:0 0 14px;font-size:17px}
 #chart{width:100%;height:300px;display:block;margin:30px 0 6px}
-.note{font-size:13.5px;font-style:italic;opacity:.8;margin-bottom:34px}
-details{border-top:1px solid var(--faint);padding:12px 0}
+.note{font-size:14px;font-style:italic;color:var(--mute);margin-bottom:34px}
+details{border-top:1px solid var(--faint);padding:13px 0}
 details:last-of-type{border-bottom:1px solid var(--faint)}
-summary{cursor:pointer;list-style:none;letter-spacing:.18em;text-transform:uppercase;font-size:12.5px}
+summary{cursor:pointer;list-style:none;font-size:16px}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";float:right;opacity:.7}
+summary::after{content:"+";float:right;color:var(--mute)}
 details[open] summary::after{content:"−"}
-details > div{padding:14px 0 6px;font-size:14.5px}
-table{border-collapse:collapse;width:100%;font-size:14px}
-td{padding:5px 0;border-bottom:1px solid rgba(244,241,228,.14);vertical-align:top}
+details > div{padding:14px 0 6px;font-size:15px}
+details p{font-size:15px!important}
+table{border-collapse:collapse;width:100%;font-size:15px}
+td{padding:6px 0;border-bottom:1px solid var(--faint);vertical-align:top}
 td:last-child{text-align:right;padding-left:16px}
-.eq{font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;margin:6px 0 14px;opacity:.95}
-.est{font-style:italic;opacity:.85}
+.eq{font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;margin:6px 0 14px;background:rgba(47,43,32,.05);padding:10px 12px}
+.est{font-style:italic}
 details ul{margin:0;padding-left:18px} details li{margin-bottom:8px}
 a{color:inherit}
 @media (max-width:720px){
-  .tl,.ml,.mr,.bl,.br{left:18px;right:auto;text-align:left}
-  .tr{right:18px;top:auto;bottom:22px}
-  .ml{top:34%;transform:none} .mr{top:58%;transform:none}
-  .mr .brace ul{text-align:left}
-  .bl{display:none}
-  .brace{font-size:13px;gap:6px} .brace .b{font-size:40px}
-  .br{bottom:22px;max-width:60%} .br p{font-size:12.5px}
+  .grid{grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr auto auto;padding:22px 18px;gap:14px 12px}
+  .s1{grid-column:1/3;grid-row:1} .s2{grid-column:1/3;grid-row:5;justify-self:start;text-align:left}
+  .s3{grid-column:1;grid-row:2;align-self:start} .s4{grid-column:1;grid-row:3;align-self:start;justify-self:start}
+  .s5{display:none} .s6{grid-column:1;grid-row:4;justify-self:start;text-align:left}
+  .s1{max-width:56vw} h1{font-size:28px} .picks li button{padding:2px 0;font-size:15px}
   #physics{padding:24px 18px 60px}
 }
 </style>
@@ -78,28 +81,23 @@ a{color:inherit}
 <section id="piece">
   <canvas id="gl" aria-label="A ray-traced stream of water falling from a spout"></canvas>
   <canvas id="ov"></canvas>
-
-  <div class="corner tl"><div class="it">Obj. 003</div><div class="caps">X Stream</div></div>
-  <div class="corner tr"><button class="caps link" data-page="physics">How it works</button></div>
-
-  <div class="corner ml">
-    <div class="brace">Water from a <span class="b">{</span><ul id="spouts"></ul><span class="b">}</span> spout,</div>
+  <div class="grid">
+    <div class="s1"><h1>X Stream</h1><p class="sub">Why a tap's stream crosses itself</p></div>
+    <div class="s2"><button class="link" data-page="physics">How it works</button></div>
+    <div class="s3"><p class="label">Spout</p><ul class="picks" id="spouts"></ul></div>
+    <div class="s4"><p class="label">Flow</p><ul class="picks" id="flows"></ul></div>
+    <div class="s5"><p>Surface tension pulls the stream round. It overshoots and flips, again and again. As the water falls, the flips stand still in the air as X's.</p></div>
+    <div class="s6"><p id="say"></p><div class="hint">Drag to walk around</div></div>
   </div>
-  <div class="corner mr">
-    <div class="brace">running <span class="b">{</span><ul id="flows"></ul><span class="b">}</span></div>
-  </div>
-
-  <div class="corner bl"><p>Surface tension pulls the stream round.<br>It overshoots, and flips.<br>Falling, the flips freeze into X's.</p></div>
-  <div class="corner br"><p id="say"></p></div>
 </section>
 
 <section id="physics" hidden>
   <header>
-    <div><div class="it" style="font-size:13px">Obj. 003</div><div class="caps" style="margin-top:6px">X Stream</div></div>
-    <button class="caps link" data-page="piece">Back to the water</button>
+    <div class="t">X Stream</div>
+    <button class="link" data-page="piece">Back to the water</button>
   </header>
   <article>
-    <h1>Why a tap stream crosses itself</h1>
+    <h2>Why a tap stream crosses itself</h2>
     <p>No spout is perfectly round. Surface tension pulls the water toward a circle. Inertia carries it past, so an oval flips 90° and back, again and again.</p>
     <p>The water falls while it flips. Each moment of the wobble lands at its own height, so the wobble stands still in the air. The light lines bend one way, then the other, and cross: X.</p>
     <p>Lower down the water is faster and thinner, so the X's stretch, until the stream breaks into drops.</p>
@@ -140,6 +138,7 @@ cₙ(z) = εₙ(z) cos φₙ(z),   φₙ(z) = ∫ kₙ dz</div>
       <li class="est">Damping and stretching laws are leading-order estimates. Here they roughly cancel over 30 cm.</li>
       <li class="est">Breakup ripples start from an assumed tap vibration of 10⁻⁴·³ of the radius.</li>
       <li class="est">The dye and the morning light are invented, to make clear water visible. The shape and optics are computed.</li>
+      <li class="est">The gentle motion is an invented tap flicker: the wobble's strength varies by ±10 % at 1.1 Hz and ±5 % at 5.5 Hz, carried down at the water's own speed.</li>
     </ul></div></details>
     <details><summary>Sources</summary><div><ul>
       <li>Lord Rayleigh, "On the capillary phenomena of jets", Proc. R. Soc. Lond. 29 (1879).</li>
@@ -324,7 +323,9 @@ float sdf(vec3 p){                         // > 0 outside the water, < 0 inside 
   if(p.z < 0. || p.z > uZmax) return 1.;
   vec4 A = row(0, p.z); vec4 B = row(1, p.z);
   float th = atan(p.y, p.x);
-  float c2 = A.y, c3 = A.z, c4 = A.w;
+  float tf = uTime - B.w;   // tap flicker, carried down with the water (invented, small)
+  float fl = 1. + 0.10*sin(6.2832*1.1*tf) + 0.05*sin(6.2832*5.5*tf + 1.3);
+  float c2 = A.y*fl, c3 = A.z*fl, c4 = A.w*fl;
   float shape = 1. + c2*cos(2.*(th-uTh.x)) + c3*cos(3.*(th-uTh.y)) + c4*cos(4.*(th-uTh.z));
   shape /= sqrt(1. + 0.5*(c2*c2 + c3*c3 + c4*c4));       // keep cross-section area (second order)
   float tt = uTime - B.w;
@@ -342,13 +343,13 @@ float adiff(float a, float b){ float d = mod(a-b+PI, 2.*PI)-PI; return d; }
 vec3 env(vec3 d){                           // a calm room in morning light; world z points DOWN
   float el = asin(clamp(-d.z,-1.,1.));      // elevation, up positive
   float az = atan(d.y, d.x);
-  vec3 c = vec3(0.287,0.346,0.168)*mix(0.45, 1.15, smoothstep(-0.35, 0.25, el));   // sage room, shadowed basin below
+  vec3 c = vec3(1.55,1.19,0.515)*mix(0.22, 1.0, smoothstep(-0.3, 0.2, el));   // pale yellow walls (the page colour), shadowed basin below
   float sa = adiff(az, radians(262.));                                           // low morning sun, front-right of you
   c += box(sa,-0.16,0.16,0.04)*box(el,-0.05,0.55,0.05)*vec3(4.5,3.6,2.4);
   float wa = adiff(az, radians(115.));                                           // window behind the stream, two mullions
   float win = box(wa,-0.32,0.32,0.03)*box(el,-0.02,0.62,0.03);
   float mull = max(box(abs(wa),-0.015,0.015,0.006), box(abs(el-0.3),-0.015,0.015,0.006));
-  c += win*(1.-0.8*mull)*vec3(1.7,1.65,1.45);
+  c += win*(1.-0.8*mull)*vec3(1.3,1.7,2.3);
   float pa = adiff(az, radians(200.));                                           // soft ceiling light behind you
   c += box(el,0.18,0.75,0.06)*box(pa,-0.7,0.7,0.08)*vec3(1.4,1.3,1.15);
   return c;
@@ -454,17 +455,17 @@ void main(){
 //  PIECE
 // ======================================================================
 const SPOUTS = [
-  {key:'round',  name:'round',          ar:1.00, e3:0,     e4:0},
-  {key:'tap',    name:'everyday',       ar:1.25, e3:0.015, e4:0.01},
-  {key:'oval',   name:'oval',           ar:1.45, e3:0,     e4:0},
-  {key:'tri',    name:'three-cornered', ar:1.00, e3:0.08,  e4:0},
-  {key:'square', name:'square',         ar:1.00, e3:0,     e4:0.08}
+  {key:'round',  name:'Round',          ar:1.00, e3:0,     e4:0},
+  {key:'tap',    name:'Everyday',       ar:1.25, e3:0.015, e4:0.01},
+  {key:'oval',   name:'Oval',           ar:1.45, e3:0,     e4:0},
+  {key:'tri',    name:'Three-cornered', ar:1.00, e3:0.08,  e4:0},
+  {key:'square', name:'Square',         ar:1.00, e3:0,     e4:0.08}
 ];
 const FLOWS = [
-  {name:'a trickle.', q:0.6}, {name:'gently.', q:1.0}, {name:'steadily.', q:1.6}, {name:'briskly.', q:2.4}
+  {name:'Trickle', q:0.6}, {name:'Gentle', q:1.0}, {name:'Steady', q:1.6}, {name:'Brisk', q:2.4}
 ];
 let spoutI = 1, flowI = 1;
-const DYE = 0.35, EXPOSURE = 1.6;
+const DYE = 0.8, EXPOSURE = 1.6;
 const Z0 = -0.012, Z1 = 0.085;                 // m, what the full canvas height shows (true scale)
 
 function applyChoice(){
@@ -502,7 +503,7 @@ initGL();
 function uploadTex(){ if(!gl || glLost) return; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, NZ, 2, 0, gl.RGBA, gl.FLOAT, M.tex); dirty = true; }
 
 // Redraw only when something changed (or breakup ripples are on screen); half resolution while dragging.
-let DPR = 1, Wpx = 0, Hpx = 0, gScale = 0, dirty = true, lastInteract = -1e9, tSim = 0, lastT = performance.now();
+let lastDraw = 0, DPR = 1, Wpx = 0, Hpx = 0, gScale = 0, dirty = true, lastInteract = -1e9, tSim = 0, lastT = performance.now();
 function resize(){
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   Wpx = Math.round(innerWidth*DPR); Hpx = Math.round(innerHeight*DPR);
@@ -524,11 +525,12 @@ function ripplesVisible(){
 function frame(now){
   const dt = Math.min(0.05, (now-lastT)/1000); lastT = now;
   const onPiece = !document.getElementById('piece').hidden;
-  const moving = onPiece && ripplesVisible();
-  if(moving) tSim += dt;
+  // The water always moves a little (tap flicker carried down), redrawn at ~30 fps to stay light on the GPU.
+  const moving = onPiece && now - lastDraw > 33;
+  if(onPiece) tSim += dt;
   setGLScale(now - lastInteract < 250 ? 0.5 : (DPR > 1.5 ? 0.75 : 1));
   if(onPiece && gl && !glLost && M && (dirty || moving)){
-    dirty = false;
+    dirty = false; lastDraw = now;
     const w = glc.width, h = glc.height;
     gl.viewport(0, 0, w, h);
     gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
@@ -558,10 +560,10 @@ function drawOverlay(){
   if(!M) return;
   const mmpx = (Z1-Z0)*1000/Hpx, cx = Wpx*centerFrac();
   const y = z => (z - Z0)/(Z1-Z0)*Hpx;
-  const cream = 'rgba(244,241,228,';
+  const cream = 'rgba(47,43,32,';
   // spout, drawn as a quiet outline
   const rO = (P.D/2 + 1.6)/mmpx, y0 = y(0);
-  ov.fillStyle = 'rgba(132,142,104,.55)'; ov.fillRect(cx-rO, 0, 2*rO, y0);
+  ov.fillStyle = 'rgba(47,43,32,.07)'; ov.fillRect(cx-rO, 0, 2*rO, y0);
   ov.strokeStyle = cream+'.85)'; ov.lineWidth = 1*DPR;
   ov.beginPath(); ov.moveTo(cx-rO, 0); ov.lineTo(cx-rO, y0); ov.lineTo(cx+rO, y0); ov.lineTo(cx+rO, 0); ov.stroke();
   // the wobble, as a hairline running alongside the stream at the same heights
@@ -575,7 +577,7 @@ function drawOverlay(){
     i ? ov.lineTo(xx, yy) : ov.moveTo(xx, yy);
   }
   ov.stroke();
-  ov.fillStyle = cream+'.75)'; ov.font = `italic ${12.5*DPR}px Alegreya, Georgia, serif`;
+  ov.fillStyle = cream+'.75)'; ov.font = `italic ${12.5*DPR}px Newsreader, Georgia, serif`;
   if(innerWidth >= 720) ov.fillText(m ? 'the wobble' : 'no wobble', gx + 18*DPR, y(0.012));
 }
 const centerFrac = () => innerWidth < 720 ? 0.71 : 0.5;   // on phones the water moves right, the words keep the left
@@ -590,9 +592,9 @@ function maxEps(m){ let e = 0; for(let i=0; i<=M.idx(Z1); i++) e = Math.max(e, m
 function say(){
   const m = dominantMode();
   const el = document.getElementById('say');
-  if(!m){ el.innerHTML = 'A perfectly round spout gives<br>nothing to overshoot: no X.<br><span style="opacity:.6">Drag to walk around.</span>'; return; }
+  if(!m){ el.innerHTML = 'A perfectly round spout has<br>nothing to overshoot: no X.'; return; }
   const l0 = 2*Math.PI/m.k[0]*100, l1 = 2*Math.PI/m.k[M.idx(0.15)]*100;
-  el.innerHTML = `One X every ${l0.toFixed(1)} cm at the spout,<br>${l1.toFixed(1)} cm a hand's width lower.<br><span style="opacity:.6">Drag to walk around.</span>`;
+  el.innerHTML = `One X every ${l0.toFixed(1)} cm at the spout,<br>every ${l1.toFixed(1)} cm a hand's width lower.`;
 }
 const glyph = s => {   // spout outline, deformation drawn 3x exaggerated so it reads at icon size
   const r0 = 20*Math.PI/180, e2 = (s.ar-1)/(s.ar+1);
@@ -605,8 +607,8 @@ const glyph = s => {   // spout outline, deformation drawn 3x exaggerated so it 
   return `<svg viewBox="0 0 15 15" aria-hidden="true"><path d="${d}Z" fill="none" stroke="currentColor" stroke-width="1"/></svg>`;
 };
 function buildLists(){
-  document.getElementById('spouts').innerHTML = SPOUTS.map((s,i)=>`<li><button data-s="${i}" class="${i===spoutI?'on':''}">${glyph(s)}${s.name}</button></li>`).join('');
-  document.getElementById('flows').innerHTML = FLOWS.map((f,i)=>`<li><button data-f="${i}" class="${i===flowI?'on':''}">${f.name}</button></li>`).join('');
+  document.getElementById('spouts').innerHTML = SPOUTS.map((s,i)=>`<li><button data-s="${i}" class="${i===spoutI?'on':''}">${glyph(s)}<span>${s.name}</span></button></li>`).join('');
+  document.getElementById('flows').innerHTML = FLOWS.map((f,i)=>`<li><button data-f="${i}" class="${i===flowI?'on':''}"><span>${f.name}</span> <small style="opacity:.6">${f.q} L/min</small></button></li>`).join('');
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if(!b) return;
@@ -640,8 +642,8 @@ function drawChart(){
   const d = Math.min(window.devicePixelRatio||1, 2), W = c.clientWidth*d, H = c.clientHeight*d;
   c.width = W; c.height = H; x.clearRect(0,0,W,H);
   const L = 0.35, iMax = M.idx(L), pad = 6*d, X = z => pad + z/L*(W-2*pad);
-  x.font = `italic ${13*d}px Alegreya, Georgia, serif`;
-  const cream = a => `rgba(244,241,228,${a})`;
+  x.font = `italic ${13*d}px Newsreader, Georgia, serif`;
+  const cream = a => `rgba(47,43,32,${a})`;
   // top: the radius (as the stream's own silhouette, both sides)
   const top0 = 22*d, top1 = H*0.42, aMax = M.a0*1000;
   const Ya = v => (top0+top1)/2 - v/aMax*(top1-top0)/2;
@@ -654,7 +656,7 @@ function drawChart(){
   const m = dominantMode();
   const b0 = H*0.56, b1 = H - 24*d, mid = (b0+b1)/2;
   x.strokeStyle = cream(.25); x.lineWidth = 1*d; x.beginPath(); x.moveTo(pad, mid); x.lineTo(W-pad, mid); x.stroke();
-  x.fillStyle = cream(.85); x.fillText(m ? 'the wobble: above the line the oval points one way, below it the other; each crossing is a round moment' : 'a round spout: no wobble', pad, b0 - 8*d);
+  x.fillStyle = cream(.85); x.fillText(m ? 'the wobble flipping; each crossing is a round moment' : 'a round spout: no wobble', pad, b0 - 8*d);
   if(m){
     let e = 0; for(let i=0;i<=iMax;i++) e = Math.max(e, m.eps[i]);
     x.strokeStyle = cream(.95); x.lineWidth = 1.3*d; x.beginPath();
@@ -665,7 +667,7 @@ function drawChart(){
   for(let cm=0; cm<=35; cm+=5){ x.textAlign = cm===0?'left':(cm===35?'right':'center'); x.fillText(cm+' cm', X(cm/100), H-4*d); }
   x.textAlign = 'left';
   document.getElementById('chartnote').textContent =
-    `${SPOUTS[spoutI].name[0].toUpperCase()+SPOUTS[spoutI].name.slice(1)} spout, running ${FLOWS[flowI].name.replace('.','')}, over the first 35 cm.`;
+    `${SPOUTS[spoutI].name} spout, ${FLOWS[flowI].name.toLowerCase()} flow (${FLOWS[flowI].q} L/min), over the first 35 cm.`;
 }
 function readouts(){
   const f = (v,d=2) => Number.isFinite(v) ? v.toFixed(d) : '—';

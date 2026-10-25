@@ -3,114 +3,154 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Water X Stream</title>
+<title>X Stream</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#0d1014; --panel:#151a20; --line:#262e38; --ink:#e6ebf0; --dim:#8b97a4; --acc:#6fc3ff; --warn:#ffb15c;
-  --c2:#6fc3ff; --c3:#ff8fb1; --c4:#b9e27a; --ca:#d9d2c2;
-}
+:root{ --sage:#a2ad84; --cream:#f4f1e4; --soft:rgba(244,241,228,.55); --faint:rgba(244,241,228,.28); }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-header{display:flex;align-items:baseline;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line)}
-header h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.2px}
-header .sub{color:var(--dim);font-size:12.5px}
-main{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:calc(100% - 49px)}
-#stage{position:relative;overflow:hidden;background:#000;cursor:grab}
-#stage:active{cursor:grabbing}
+html,body{margin:0;height:100%;background:var(--sage);color:var(--cream);
+  font:15px/1.5 "Alegreya", Georgia, "Times New Roman", serif;-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.caps{letter-spacing:.22em;text-transform:uppercase;font-size:13px}
+.it{font-style:italic}
+
+/* ---------- the piece ---------- */
+#piece{position:fixed;inset:0;overflow:hidden}
 #gl,#ov{position:absolute;inset:0;width:100%;height:100%;display:block}
+#gl{cursor:ew-resize;touch-action:none}
 #ov{pointer-events:none}
-#hint{position:absolute;right:12px;bottom:10px;color:#9aa6b2;font-size:11.5px;background:rgba(0,0,0,.45);padding:4px 8px;border-radius:6px;pointer-events:none}
-aside{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:12px 14px 30px}
-h2{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin:16px 0 8px;font-weight:600}
-h2:first-child{margin-top:2px}
-.row{display:grid;grid-template-columns:118px 1fr 64px;align-items:center;gap:8px;margin:5px 0}
-.row label{color:#c5cdd6}
-.row output{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
-input[type=range]{width:100%;accent-color:var(--acc)}
-select{width:100%;background:#0f1318;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px}
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 6px}
-.chips button{background:#0f1318;color:#cdd5dd;border:1px solid var(--line);border-radius:14px;padding:3px 9px;font-size:12px;cursor:pointer}
-.chips button:hover{border-color:var(--acc);color:#fff}
-.chk{display:flex;align-items:center;gap:7px;margin:5px 0;color:#c5cdd6}
-table.read{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-table.read td{padding:2px 0;border-bottom:1px dashed #222a33}
-table.read td:last-child{text-align:right}
-.warn{color:var(--warn);font-size:12px;margin-top:6px}
-.note{color:var(--dim);font-size:12px}
-canvas.plot{width:100%;display:block;background:#0f1318;border:1px solid var(--line);border-radius:6px}
-#xsec{width:150px;height:150px}
-.xs{display:flex;gap:10px;align-items:center}
-details{margin-top:10px;color:#c5cdd6}
-details summary{cursor:pointer;color:var(--acc)}
-code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:#cfe6ff}
-@media (max-width:860px){main{grid-template-columns:1fr;height:auto}#stage{height:78vh}aside{border-left:0;border-top:1px solid var(--line)}}
+.corner{position:absolute;z-index:2}
+.tl{top:32px;left:38px} .tr{top:32px;right:38px;text-align:right} .bl{bottom:34px;left:38px} .br{bottom:34px;right:38px;text-align:right}
+.ml{top:50%;left:38px;transform:translateY(-50%)} .mr{top:50%;right:38px;transform:translateY(-50%)}
+.tl .it{font-size:13px;opacity:.9} .tl .caps{margin-top:6px}
+.brace{display:flex;align-items:center;gap:10px;font-size:14px}
+.brace .b{font-size:46px;line-height:1;font-weight:300;opacity:.75;transform:scaleX(.55)}
+.brace ul{list-style:none;margin:0;padding:0;text-align:center}
+.mr .brace ul{text-align:right}
+.brace li button{display:inline-flex;align-items:center;gap:7px;padding:1px 0;opacity:.45;transition:opacity .2s}
+.brace li button:hover{opacity:.8}
+.brace li button.on{opacity:1}
+.brace svg{width:15px;height:15px;overflow:visible}
+.bl p{margin:0;font-style:italic;font-size:13.5px;line-height:1.45}
+.br p{margin:0;font-style:italic;font-size:13.5px;line-height:1.45}
+.link{border-bottom:1px solid var(--faint);padding-bottom:1px}
+.link:hover{border-color:var(--cream)}
+
+/* ---------- how it works ---------- */
+#physics{min-height:100%;padding:32px 38px 80px}
+#physics header{display:flex;justify-content:space-between;align-items:flex-start}
+#physics article{max-width:640px;margin:70px auto 0}
+#physics h1{font-weight:400;font-size:30px;margin:0 0 22px;letter-spacing:.01em}
+#physics p{margin:0 0 14px;font-size:16px}
+#chart{width:100%;height:300px;display:block;margin:30px 0 6px}
+.note{font-size:13.5px;font-style:italic;opacity:.8;margin-bottom:34px}
+details{border-top:1px solid var(--faint);padding:12px 0}
+details:last-of-type{border-bottom:1px solid var(--faint)}
+summary{cursor:pointer;list-style:none;letter-spacing:.18em;text-transform:uppercase;font-size:12.5px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";float:right;opacity:.7}
+details[open] summary::after{content:"−"}
+details > div{padding:14px 0 6px;font-size:14.5px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td{padding:5px 0;border-bottom:1px solid rgba(244,241,228,.14);vertical-align:top}
+td:last-child{text-align:right;padding-left:16px}
+.eq{font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;margin:6px 0 14px;opacity:.95}
+.est{font-style:italic;opacity:.85}
+details ul{margin:0;padding-left:18px} details li{margin-bottom:8px}
+a{color:inherit}
+@media (max-width:720px){
+  .tl,.ml,.mr,.bl,.br{left:18px;right:auto;text-align:left}
+  .tr{right:18px;top:auto;bottom:22px}
+  .ml{top:34%;transform:none} .mr{top:58%;transform:none}
+  .mr .brace ul{text-align:left}
+  .bl{display:none}
+  .brace{font-size:13px;gap:6px} .brace .b{font-size:40px}
+  .br{bottom:22px;max-width:60%} .br p{font-size:12.5px}
+  #physics{padding:24px 18px 60px}
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>Water X Stream</h1>
-  <span class="sub">Why a smooth tap stream shows crossing X lines: a capillary standing wave on a free jet, ray-traced.</span>
-</header>
-<main>
-  <div id="stage">
-    <canvas id="gl"></canvas>
-    <canvas id="ov"></canvas>
-    <div id="hint">drag sideways to walk around the stream · drag up/down or scroll to move along it · click the left strip to jump</div>
+
+<section id="piece">
+  <canvas id="gl" aria-label="A ray-traced stream of water falling from a spout"></canvas>
+  <canvas id="ov"></canvas>
+
+  <div class="corner tl"><div class="it">Obj. 003</div><div class="caps">X Stream</div></div>
+  <div class="corner tr"><button class="caps link" data-page="physics">How it works</button></div>
+
+  <div class="corner ml">
+    <div class="brace">Water from a <span class="b">{</span><ul id="spouts"></ul><span class="b">}</span> spout,</div>
   </div>
-  <aside>
-    <h2>Tap</h2>
-    <div class="row"><label for="q">Flow rate</label><input id="q" type="range" min="0" max="1" step="0.001"><output id="qo"></output></div>
-    <div class="row"><label for="d">Spout diameter</label><input id="d" type="range" min="3" max="16" step="0.1"><output id="do"></output></div>
+  <div class="corner mr">
+    <div class="brace">running <span class="b">{</span><ul id="flows"></ul><span class="b">}</span></div>
+  </div>
 
-    <h2>Spout shape</h2>
-    <div class="chips" id="shapes">
-      <button data-p="round">Perfectly round</button>
-      <button data-p="tap">Ordinary tap (guess)</button>
-      <button data-p="ellipse">Squashed oval</button>
-      <button data-p="tri">Triangular</button>
-      <button data-p="square">Square</button>
-      <button data-p="mix">Bent tube</button>
-    </div>
-    <div class="row"><label for="e2">Oval (axis ratio)</label><input id="e2" type="range" min="1" max="1.6" step="0.005"><output id="e2o"></output></div>
-    <div class="row"><label for="e3">Triangularity</label><input id="e3" type="range" min="0" max="0.15" step="0.001"><output id="e3o"></output></div>
-    <div class="row"><label for="e4">Squareness</label><input id="e4" type="range" min="0" max="0.15" step="0.001"><output id="e4o"></output></div>
-    <div class="row"><label for="rot">Spout rotation</label><input id="rot" type="range" min="0" max="90" step="1"><output id="roto"></output></div>
+  <div class="corner bl"><p>Surface tension pulls the stream round.<br>It overshoots, and flips.<br>Falling, the flips freeze into X's.</p></div>
+  <div class="corner br"><p id="say"></p></div>
+</section>
 
-    <h2>Water</h2>
-    <div class="row"><label for="tc">Temperature</label><input id="tc" type="range" min="2" max="80" step="1"><output id="tco"></output></div>
-    <label class="chk"><input id="soap" type="checkbox"> Dish soap in the water (lower surface tension, estimate)</label>
-    <div class="row"><label for="nz">Tap vibration</label><input id="nz" type="range" min="-7" max="-2" step="0.05"><output id="nzo"></output></div>
+<section id="physics" hidden>
+  <header>
+    <div><div class="it" style="font-size:13px">Obj. 003</div><div class="caps" style="margin-top:6px">X Stream</div></div>
+    <button class="caps link" data-page="piece">Back to the water</button>
+  </header>
+  <article>
+    <h1>Why a tap stream crosses itself</h1>
+    <p>No spout is perfectly round. Surface tension pulls the water toward a circle. Inertia carries it past, so an oval flips 90° and back, again and again.</p>
+    <p>The water falls while it flips. Each moment of the wobble lands at its own height, so the wobble stands still in the air. The light lines bend one way, then the other, and cross: X.</p>
+    <p>Lower down the water is faster and thinner, so the X's stretch, until the stream breaks into drops.</p>
+    <canvas id="chart"></canvas>
+    <div class="note" id="chartnote"></div>
 
-    <h2>Looking</h2>
-    <div class="row"><label for="lt">Room light</label><select id="lt"><option value="0">Kitchen: window + ceiling panel</option><option value="1">Dark room, two strip lights</option><option value="2">Backlit by a window</option></select></div>
-    <label class="chk"><input id="card" type="checkbox"> Checkered card 4 cm behind the stream</label>
-    <div class="row"><label for="dye">Food dye</label><input id="dye" type="range" min="0" max="1" step="0.01"><output id="dyeo"></output></div>
-    <div class="row"><label for="ex">Exposure</label><input id="ex" type="range" min="0.5" max="4" step="0.05"><output id="exo"></output></div>
-    <div class="row"><label for="az">Walk around</label><input id="az" type="range" min="0" max="360" step="1"><output id="azo"></output></div>
-    <div class="row"><label for="el">Eye height</label><input id="el" type="range" min="-25" max="25" step="1"><output id="elo"></output></div>
-    <div class="row"><label for="win">Close-up height</label><input id="win" type="range" min="2" max="25" step="0.5"><output id="wino"></output></div>
-    <div class="row"><label for="len">Strip length</label><input id="len" type="range" min="10" max="60" step="1"><output id="leno"></output></div>
-    <label class="chk"><input id="ann" type="checkbox" checked> Mark where the cross-section is round (nodes)</label>
-    <label class="chk"><input id="frz" type="checkbox"> Freeze time (the X pattern itself is steady; only breakup ripples move)</label>
-
-    <h2>What the physics says</h2>
-    <table class="read" id="read"></table>
-    <div id="warns"></div>
-
-    <h2>Along the stream</h2>
-    <canvas class="plot" id="plot" height="300"></canvas>
-    <div class="note">Top: jet radius. Middle: local wavelength of each shape wave. Bottom: the shape deformation itself, its sign flipping is the alternation you see. Shaded band is the close-up window; the dashed line is the estimated breakup into drops.</div>
-
-    <h2>Cross-section at the cursor</h2>
-    <div class="xs"><canvas id="xsec" width="300" height="300"></canvas>
-      <div class="note" id="xsnote">Hover over the close-up to slice the stream. The arrow is your line of sight. The dashed circle is a round jet of the same area.</div></div>
-
-    <details><summary>How it works, in one paragraph</summary>
-      <p>A spout is never perfectly round. The jet leaves with the spout's slightly oval (or triangular, square) cross-section, and surface tension pulls it back toward a circle. Water has inertia, so it overshoots: the oval flips 90°, then flips back, a free oscillation at Rayleigh's frequency. The water moves down while it oscillates, so time becomes height: the oscillation is frozen into a steady pattern along the stream, one full flip-and-back every wavelength λ = 2πU/ω. Seen from the side the stream looks alternately wide and thin, and the curved faces that catch the room lights swap sides at every node. The bright reflection lines therefore cross, which is the X. Gravity speeds the water up and thins it, so the X's get longer as they go down, until the Rayleigh–Plateau instability breaks the stream into drops.</p>
-      <p>Every pixel here is a ray traced through the computed surface with Snell's law and Fresnel reflection (water n = 1.333). Nothing is drawn by hand except the spout. Equations, constants and every estimate are listed in the README.</p>
-    </details>
-  </aside>
-</main>
+    <details><summary>Numbers for this stream</summary><div><table id="read"></table><div id="warns"></div></div></details>
+    <details><summary>Equations</summary><div>
+      <p>Falling and thinning (z is distance below the spout):</p>
+      <div class="eq">U(z) = √(U₀² + 2gz)      a(z) = a₀ √(U₀ / U(z))</div>
+      <p>Shape of the surface, n = 2 oval, 3 three-cornered, 4 square:</p>
+      <div class="eq">R(θ,z) = a(z) [1 + Σ cₙ(z) cos n(θ − θₙ)] / √(1 + ½ Σ cₙ²)
+cₙ(z) = εₙ(z) cos φₙ(z),   φₙ(z) = ∫ kₙ dz</div>
+      <p>Rayleigh's frequency of a wobbling liquid column (x = ka):</p>
+      <div class="eq">ω² = (σ / ρa³) · x Iₙ'(x)/Iₙ(x) · (n² − 1 + x²)</div>
+      <p>The pattern stands still, so the wave number solves k·U = ω(k) at each height. Bohr's finite-amplitude correction for the oval:</p>
+      <div class="eq">λ₂ → λ₂ √(1 + 37/24 · ε₂²)</div>
+      <p>Viscous damping and stretching of the wobble:</p>
+      <div class="eq">εₙ ∝ a^(−1/4) · exp(−∫ 2n(n−1)ν / (a² U) dz)</div>
+      <p>Breakup into drops (Rayleigh–Plateau), ripples carried down at fixed frequency w, k = w/U:</p>
+      <div class="eq">s² = (σ / ρa³) · x(1 − x²) I₁(x)/I₀(x),   δ = δ₀ exp(∫ s/U dz)</div>
+      <p>Every pixel is a ray traced through this surface: Snell refraction, Fresnel reflection, n = 1.333, dye absorbed along the path inside the water.</p>
+    </div></details>
+    <details><summary>Constants</summary><div><table>
+      <tr><td>Gravity g</td><td>9.81 m/s²</td></tr>
+      <tr><td>Surface tension σ (18 °C)</td><td>73.0 mN/m · IAPWS 2014</td></tr>
+      <tr><td>Viscosity μ (18 °C)</td><td>1.05 mPa·s · Vogel fit</td></tr>
+      <tr><td>Density ρ (18 °C)</td><td>998.6 kg/m³ · Thiesen fit</td></tr>
+      <tr><td>Refractive index</td><td>1.333</td></tr>
+      <tr><td>Spout bore</td><td>8 mm</td></tr>
+      <tr><td>Flows: trickle · gentle · steady · brisk</td><td>0.6 · 1.0 · 1.6 · 2.4 L/min</td></tr>
+    </table></div></details>
+    <details><summary>What is estimated</summary><div><ul>
+      <li class="est">A real tap's spout shape is unknown. The five spouts are typical guesses; the icons draw them three times exaggerated.</li>
+      <li class="est">The spout releases a plug flow, with no vena contracta and no velocity-profile relaxation.</li>
+      <li class="est">The jet is assumed smooth (laminar). Above Reynolds ≈ 4000 a real spout may run rough and blur the X.</li>
+      <li class="est">Bohr's 37/24 coefficient is quoted from the oscillating-jet literature, not re-derived.</li>
+      <li class="est">Damping and stretching laws are leading-order estimates. Here they roughly cancel over 30 cm.</li>
+      <li class="est">Breakup ripples start from an assumed tap vibration of 10⁻⁴·³ of the radius.</li>
+      <li class="est">The dye and the morning light are invented, to make clear water visible. The shape and optics are computed.</li>
+    </ul></div></details>
+    <details><summary>Sources</summary><div><ul>
+      <li>Lord Rayleigh, "On the capillary phenomena of jets", Proc. R. Soc. Lond. 29 (1879).</li>
+      <li>N. Bohr, "Determination of the surface-tension of water by the method of jet vibration", Phil. Trans. R. Soc. A 209 (1909).</li>
+      <li><a href="https://arxiv.org/abs/1504.05105">Experimental observation of Bohr's nonlinear fluidic surface oscillation</a>, Sci. Rep. 6, 19805 (2016).</li>
+      <li>J. Eggers & E. Villermaux, "Physics of liquid jets", Rep. Prog. Phys. 71 (2008).</li>
+      <li>IAPWS, Revised release on the surface tension of ordinary water substance (2014).</li>
+      <li>Observation: <a href="https://www.reddit.com/r/askscience/comments/34ne9l/what_causes_x_shaped_lines_on_the_stream_when_i/">r/askscience, "What causes X shaped lines on the stream?"</a></li>
+    </ul></div></details>
+  </article>
+</section>
 
 <script>
 "use strict";
@@ -261,6 +301,7 @@ function compute(){
        psi: [0.7, 2.9, 5.1], noRoot};
 }
 
+
 // ======================================================================
 //  RENDERING (WebGL2 ray tracer)
 // ======================================================================
@@ -298,35 +339,18 @@ vec3 grad(vec3 p){
 }
 float box(float x, float a, float b, float s){ return smoothstep(a-s, a+s, x)*(1.-smoothstep(b-s, b+s, x)); }
 float adiff(float a, float b){ float d = mod(a-b+PI, 2.*PI)-PI; return d; }
-vec3 env(vec3 d){                           // room around the stream; world z points DOWN
+vec3 env(vec3 d){                           // a calm room in morning light; world z points DOWN
   float el = asin(clamp(-d.z,-1.,1.));      // elevation, up positive
   float az = atan(d.y, d.x);
-  vec3 c;
-  if(uLight == 0){
-    c = mix(vec3(0.035,0.032,0.03), vec3(0.11,0.105,0.10), smoothstep(-0.6, 0.9, el));
-    float tile = max(box(fract(az*180./PI/9.), 0.0, 0.05, 0.01), box(fract(el*180./PI/9.), 0.0, 0.05, 0.01));
-    c *= 1. - 0.25*tile*(1.-smoothstep(0.3,0.6,el));
-    float wa = adiff(az, radians(115.));                      // window, back-left
-    float win = box(wa, -0.30, 0.30, 0.01)*box(el, -0.05, 0.6, 0.01);
-    float mull = max(box(abs(wa), -0.012, 0.012, 0.004), box(abs(el-0.27), -0.012, 0.012, 0.004));
-    c += win*(1.-mull)*vec3(1.35,1.45,1.6)*(0.85+0.3*smoothstep(-0.05,0.6,el));
-    float sa = adiff(az, radians(262.));                      // under-cabinet strip light, right
-    c += box(sa, -0.12, 0.12, 0.01)*box(el, -0.25, 0.65, 0.01)*vec3(2.6,2.4,2.1);
-    float pa = adiff(az, radians(200.));                      // ceiling light behind you
-    c += box(el, 0.18, 0.75, 0.03)*box(pa, -0.7, 0.7, 0.03)*vec3(1.6,1.55,1.45);
-  } else if(uLight == 1){
-    c = vec3(0.006) + 0.01*smoothstep(-0.3,0.8,el);
-    float a1 = adiff(az, radians(118.)), a2 = adiff(az, radians(258.));
-    float ev = box(el, -0.35, 1.0, 0.02);
-    c += ev*box(a1, -0.09, 0.09, 0.008)*vec3(5.0,4.4,3.6);
-    c += ev*box(a2, -0.09, 0.09, 0.008)*vec3(3.2,3.8,4.8);
-  } else {
-    c = vec3(0.02,0.022,0.025) + 0.03*smoothstep(-0.4,0.8,el);
-    float wa = adiff(az, radians(9.));
-    float win = box(wa, -0.40, 0.40, 0.015)*box(el, -0.25, 0.75, 0.015);
-    float mull = max(box(abs(wa), -0.01, 0.01, 0.004), box(abs(el-0.25), -0.01, 0.01, 0.004));
-    c += win*(1.-mull)*vec3(1.6,1.7,1.85)*(0.7+0.5*smoothstep(-0.25,0.75,el));
-  }
+  vec3 c = vec3(0.287,0.346,0.168)*mix(0.45, 1.15, smoothstep(-0.35, 0.25, el));   // sage room, shadowed basin below
+  float sa = adiff(az, radians(262.));                                           // low morning sun, front-right of you
+  c += box(sa,-0.16,0.16,0.04)*box(el,-0.05,0.55,0.05)*vec3(4.5,3.6,2.4);
+  float wa = adiff(az, radians(115.));                                           // window behind the stream, two mullions
+  float win = box(wa,-0.32,0.32,0.03)*box(el,-0.02,0.62,0.03);
+  float mull = max(box(abs(wa),-0.015,0.015,0.006), box(abs(el-0.3),-0.015,0.015,0.006));
+  c += win*(1.-0.8*mull)*vec3(1.7,1.65,1.45);
+  float pa = adiff(az, radians(200.));                                           // soft ceiling light behind you
+  c += box(el,0.18,0.75,0.06)*box(pa,-0.7,0.7,0.08)*vec3(1.4,1.3,1.15);
   return c;
 }
 // Checkered card standing behind the stream: a real plane 40 mm behind the axis, so refraction displaces it
@@ -392,6 +416,7 @@ void main(){
   float zc = 0.5*(uZ0+uZ1);
   vec3 ro = s*r + (zs-zc)*dn + vec3(0.,0.,zc);
   vec3 col = scene(ro, d);
+  float hitA = 0.;
   vec2 tc = cyl(ro, d, uRb);
   if(tc.x < tc.y){
     float th;
@@ -419,20 +444,41 @@ void main(){
           ct = cin*tint(te);
         } else ct = scene(p, dt);
       }
-      col = F*cr + (1.-F)*ct;
+      col = F*cr + (1.-F)*ct; hitA = 1.;
     }
   }
   col = 1. - exp(-col*uExp);
-  o = vec4(pow(col, vec3(1./2.2)), 1.);
+  o = vec4(pow(col, vec3(1./2.2))*hitA, hitA);   // transparent where there is no water: the page shows through
 }`.replace(/N_IOR_/g, N_IOR.toFixed(3));
+// ======================================================================
+//  PIECE
+// ======================================================================
+const SPOUTS = [
+  {key:'round',  name:'round',          ar:1.00, e3:0,     e4:0},
+  {key:'tap',    name:'everyday',       ar:1.25, e3:0.015, e4:0.01},
+  {key:'oval',   name:'oval',           ar:1.45, e3:0,     e4:0},
+  {key:'tri',    name:'three-cornered', ar:1.00, e3:0.08,  e4:0},
+  {key:'square', name:'square',         ar:1.00, e3:0,     e4:0.08}
+];
+const FLOWS = [
+  {name:'a trickle.', q:0.6}, {name:'gently.', q:1.0}, {name:'steadily.', q:1.6}, {name:'briskly.', q:2.4}
+];
+let spoutI = 1, flowI = 1;
+const DYE = 0.35, EXPOSURE = 1.6;
+const Z0 = -0.012, Z1 = 0.085;                 // m, what the full canvas height shows (true scale)
 
-const stage = document.getElementById('stage');
+function applyChoice(){
+  const s = SPOUTS[spoutI];
+  Object.assign(P, {ar:s.ar, e3:s.e3, e4:s.e4, qLmin:FLOWS[flowI].q, D:8, rot:20, Tc:18, soap:false, noise:-4.3});
+}
+
+// ---------------- WebGL ----------------
 const glc = document.getElementById('gl'), ovc = document.getElementById('ov');
 const ov = ovc.getContext('2d');
 let gl = null, prog, tex, uni = {}, glLost = false;
 function initGL(){
-  gl = glc.getContext('webgl2', {antialias:false, preserveDrawingBuffer:false, powerPreference:'high-performance'});
-  if(!gl){ document.getElementById('hint').textContent = 'WebGL2 is not available in this browser, so the ray-traced view cannot run.'; return; }
+  gl = glc.getContext('webgl2', {antialias:false, premultipliedAlpha:true, powerPreference:'high-performance'});
+  if(!gl){ document.getElementById('say').textContent = 'This browser has no WebGL2, so the water cannot be drawn.'; return; }
   const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s);
     if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
   prog = gl.createProgram();
@@ -449,25 +495,19 @@ function initGL(){
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   if(M) uploadTex();
 }
-// If the GPU resets (heavy shader, sleep, driver), recover instead of leaving a dead canvas.
+// If the GPU resets, rebuild instead of leaving a dead canvas.
 glc.addEventListener('webglcontextlost', e => { e.preventDefault(); glLost = true; });
-glc.addEventListener('webglcontextrestored', () => { glLost = false; initGL(); markDirty(); });
+glc.addEventListener('webglcontextrestored', () => { glLost = false; initGL(); dirty = true; });
 initGL();
-function uploadTex(){ if(!gl || glLost) return; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, NZ, 2, 0, gl.RGBA, gl.FLOAT, M.tex); markDirty(); }
+function uploadTex(){ if(!gl || glLost) return; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, NZ, 2, 0, gl.RGBA, gl.FLOAT, M.tex); dirty = true; }
 
-// The ray tracer only redraws when something changed (or breakup ripples are on screen),
-// and draws at reduced resolution while you are dragging, so the GPU is never flooded.
-let DPR = 1, Wpx = 0, Hpx = 0, gScale = 1, dirty = true, lastInteract = -1e9;
-const OVW = 92; // css px width of the overview strip
-let zTop = -0.012;   // m, top of close-up window
-function markDirty(){ dirty = true; }
-function interacting(){ lastInteract = performance.now(); dirty = true; }
+// Redraw only when something changed (or breakup ripples are on screen); half resolution while dragging.
+let DPR = 1, Wpx = 0, Hpx = 0, gScale = 0, dirty = true, lastInteract = -1e9, tSim = 0, lastT = performance.now();
 function resize(){
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  const r = stage.getBoundingClientRect();
-  Wpx = Math.round(r.width*DPR); Hpx = Math.round(r.height*DPR);
+  Wpx = Math.round(innerWidth*DPR); Hpx = Math.round(innerHeight*DPR);
   ovc.width = Wpx; ovc.height = Hpx;
-  setGLScale(gScale, true);
+  setGLScale(gScale || 1, true);
 }
 function setGLScale(q, force){
   if(q === gScale && !force) return;
@@ -476,38 +516,22 @@ function setGLScale(q, force){
   if(glc.width !== w || glc.height !== h){ glc.width = w; glc.height = h; }
   dirty = true;
 }
-function layout(){
-  const ow = Math.round(OVW*DPR), gap = Math.round(10*DPR);
-  return {ov: {x:0, y:0, w:ow, h:Hpx}, cu: {x:ow+gap, y:0, w:Wpx-ow-gap, h:Hpx}};
-}
-let tSim = 0, lastT = performance.now();
-function drawView(vp, z0, z1){
-  const q = glc.height/Hpx;
-  const x = Math.round(vp.x*q), w = Math.round(vp.w*q), h = Math.round(vp.h*q), y = glc.height - Math.round(vp.y*q) - h;
-  gl.viewport(x, y, w, h); gl.scissor(x, y, w, h);
-  gl.uniform4f(uni.uVP, x, y, w, h);
-  gl.uniform1f(uni.uZ0, z0*1000); gl.uniform1f(uni.uZ1, z1*1000);
-  gl.uniform1f(uni.uDpx, (z1-z0)*1000/h);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
-}
 function ripplesVisible(){
-  if(P.frz || !M) return false;
-  const i0 = M.idx(Math.max(0, zTop)), i1 = M.idx(Math.max(zTop + P.win/100, P.len/100));
-  for(let i=i1;i>=i0;i-=8) if(M.del[1][i] > 0.004) return true;
+  if(!M) return false;
+  for(let i=M.idx(Z1); i>=0; i-=8) if(M.del[1][i] > 0.004) return true;
   return false;
 }
-const LIGHT_CARD = [1.0, 0.22, 1.3];
 function frame(now){
   const dt = Math.min(0.05, (now-lastT)/1000); lastT = now;
-  const moving = ripplesVisible();
+  const onPiece = !document.getElementById('piece').hidden;
+  const moving = onPiece && ripplesVisible();
   if(moving) tSim += dt;
-  const busy = now - lastInteract < 250;
-  setGLScale(busy ? 0.5 : (DPR > 1.5 ? 0.75 : 1));
-  if(gl && !glLost && M && (dirty || moving)){
+  setGLScale(now - lastInteract < 250 ? 0.5 : (DPR > 1.5 ? 0.75 : 1));
+  if(onPiece && gl && !glLost && M && (dirty || moving)){
     dirty = false;
-    const L = layout();
-    gl.enable(gl.SCISSOR_TEST);
-    gl.clearColor(0.05,0.06,0.07,1); gl.scissor(0,0,glc.width,glc.height); gl.clear(gl.COLOR_BUFFER_BIT);
+    const w = glc.width, h = glc.height;
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.uniform1i(uni.uData, 0); gl.uniform1i(uni.uN, NZ); gl.uniform1f(uni.uZmax, ZMAX*1000);
     gl.uniform1f(uni.uAz, P.az*Math.PI/180); gl.uniform1f(uni.uEl, P.el*Math.PI/180);
@@ -515,266 +539,164 @@ function frame(now){
     const r = P.rot*Math.PI/180;
     gl.uniform3f(uni.uTh, r, r + 0.3, r + 0.15);
     gl.uniform3f(uni.uW, M.ws[0], M.ws[1], M.ws[2]); gl.uniform3f(uni.uPsi, M.psi[0], M.psi[1], M.psi[2]);
-    gl.uniform1i(uni.uLight, P.light);
-    gl.uniform3f(uni.uAbs, P.dye*0.35, P.dye*0.20, P.dye*0.04);
-    gl.uniform1f(uni.uCard, P.card ? LIGHT_CARD[P.light] : 0); gl.uniform1f(uni.uCardAz, 150*Math.PI/180);
-    gl.uniform1f(uni.uExp, P.ex);
-    drawView(L.ov, -0.004, P.len/100);
-    drawView(L.cu, zTop, zTop + P.win/100);
+    gl.uniform1i(uni.uLight, 0);
+    gl.uniform3f(uni.uAbs, DYE*0.35, DYE*0.20, DYE*0.04);
+    gl.uniform1f(uni.uCard, 0); gl.uniform1f(uni.uCardAz, 0);
+    gl.uniform1f(uni.uExp, EXPOSURE);
+    gl.uniform4f(uni.uVP, (centerFrac()-0.5)*w, 0, w, h);
+    gl.uniform1f(uni.uZ0, Z0*1000); gl.uniform1f(uni.uZ1, Z1*1000);
+    gl.uniform1f(uni.uDpx, (Z1-Z0)*1000/h);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    drawOverlay();
   }
-  drawOverlay();
   requestAnimationFrame(frame);
 }
 
-// ---------------- overlay: spout, scale bar, nodes, window -------------
-function drawSpout(vp, z0, z1){
-  const mmpx = (z1-z0)*1000/vp.h;
-  const yOf = zm => vp.y + (zm/1000 - z0)/(z1-z0)*vp.h;
-  const y0 = yOf(0); if(y0 < vp.y) return;
-  const cx = vp.x + vp.w/2, rOut = (P.D/2 + 1.6)/mmpx, rIn = (P.D/2)/mmpx;
-  const top = Math.max(vp.y, yOf(-60));
-  const g = ov.createLinearGradient(cx-rOut, 0, cx+rOut, 0);
-  g.addColorStop(0,'#2a2f35'); g.addColorStop(0.25,'#c9d1d9'); g.addColorStop(0.42,'#6b747e'); g.addColorStop(0.7,'#9aa4ae'); g.addColorStop(1,'#1d2126');
-  ov.fillStyle = g; ov.fillRect(cx-rOut, top, 2*rOut, y0-top);
-  ov.fillStyle = '#0b0d10'; ov.fillRect(cx-rIn, y0-Math.max(1, 0.8/mmpx), 2*rIn, Math.max(1,0.8/mmpx));
-}
+// ---------------- overlay: line-drawn spout, and the wobble drawn beside the water ----------------
 function drawOverlay(){
   ov.clearRect(0,0,Wpx,Hpx);
   if(!M) return;
-  const L = layout(), cu = L.cu, o = L.ov;
-  drawSpout(o, -0.004, P.len/100);
-  drawSpout(cu, zTop, zTop+P.win/100);
-  ov.font = `${11*DPR}px ui-sans-serif,system-ui,sans-serif`;
-  // overview window rectangle
-  const yo = z => o.y + (z+0.004)/(P.len/100+0.004)*o.h;
-  ov.strokeStyle = 'rgba(111,195,255,.9)'; ov.lineWidth = 1.5*DPR;
-  ov.strokeRect(o.x+2*DPR, yo(zTop), o.w-4*DPR, yo(zTop+P.win/100)-yo(zTop));
-  if(isFinite(M.zBreak) && M.zBreak < P.len/100){
-    ov.setLineDash([4*DPR,4*DPR]); ov.strokeStyle='rgba(255,177,92,.8)';
-    ov.beginPath(); ov.moveTo(o.x, yo(M.zBreak)); ov.lineTo(o.x+o.w, yo(M.zBreak)); ov.stroke(); ov.setLineDash([]);
+  const mmpx = (Z1-Z0)*1000/Hpx, cx = Wpx*centerFrac();
+  const y = z => (z - Z0)/(Z1-Z0)*Hpx;
+  const cream = 'rgba(244,241,228,';
+  // spout, drawn as a quiet outline
+  const rO = (P.D/2 + 1.6)/mmpx, y0 = y(0);
+  ov.fillStyle = 'rgba(132,142,104,.55)'; ov.fillRect(cx-rO, 0, 2*rO, y0);
+  ov.strokeStyle = cream+'.85)'; ov.lineWidth = 1*DPR;
+  ov.beginPath(); ov.moveTo(cx-rO, 0); ov.lineTo(cx-rO, y0); ov.lineTo(cx+rO, y0); ov.lineTo(cx+rO, 0); ov.stroke();
+  // the wobble, as a hairline running alongside the stream at the same heights
+  const m = dominantMode();
+  const gx = cx + Math.max(M.a0*1000/mmpx*(innerWidth < 720 ? 1.6 : 2.2), 40*DPR), amp = 13*DPR;
+  ov.strokeStyle = cream+'.22)'; ov.beginPath(); ov.moveTo(gx, y(0)); ov.lineTo(gx, Hpx); ov.stroke();
+  ov.strokeStyle = cream+'.8)'; ov.lineWidth = 1*DPR; ov.beginPath();
+  const scale = m ? amp/Math.max(1e-6, maxEps(m)) : 0;
+  for(let i=0; i<=M.idx(Z1); i+=2){
+    const xx = gx + (m ? m.c[i]*scale : 0), yy = y(M.z[i]);
+    i ? ov.lineTo(xx, yy) : ov.moveTo(xx, yy);
   }
-  ov.fillStyle = 'rgba(200,210,220,.75)';
-  for(let c=10;c<P.len;c+=10){ const y = yo(c/100); ov.fillRect(o.x, y, 5*DPR, 1*DPR); ov.fillText(c+'cm', o.x+7*DPR, y+4*DPR); }
-  // close-up annotations
-  const z0 = zTop, z1 = zTop + P.win/100;
-  const yc = z => cu.y + (z - z0)/(z1-z0)*cu.h;
-  const mmpx = (z1-z0)*1000/cu.h;
-  // scale bar 1 cm
-  const bx = cu.x + 18*DPR, by = cu.y + cu.h - 22*DPR, bl = 10/mmpx;
-  ov.fillStyle = 'rgba(230,235,240,.85)'; ov.fillRect(bx, by, bl, 2*DPR);
-  ov.fillText('1 cm (true scale, no stretch)', bx, by - 6*DPR);
-  ov.fillText(`${(z0*100).toFixed(1)} cm below spout`, cu.x + 18*DPR, cu.y + 18*DPR);
-  ov.fillText(`${(z1*100).toFixed(1)} cm`, cu.x + 18*DPR, cu.y + cu.h - 40*DPR);
-  if(P.ann){
-    const m = M.modes[2];
-    const cx = cu.x + cu.w/2;
-    const i0 = Math.max(1, M.idx(Math.max(z0,0))), i1 = M.idx(z1);
-    let anyMode = m.eps0 > 0.002 ? m : (M.modes[3].eps0>0.002 ? M.modes[3] : (M.modes[4].eps0>0.002 ? M.modes[4] : null));
-    if(anyMode){
-      for(let i=i0;i<=i1;i++){
-        const a = anyMode.c[i-1], b = anyMode.c[i];
-        if((a>0) !== (b>0)){
-          const y = yc(M.z[i]); const rpx = M.a[i]*1000/mmpx;
-          ov.strokeStyle = 'rgba(111,195,255,.55)'; ov.lineWidth = 1*DPR;
-          ov.beginPath(); ov.moveTo(cx + rpx + 10*DPR, y); ov.lineTo(cx + rpx + 34*DPR, y); ov.stroke();
-          ov.fillStyle = 'rgba(111,195,255,.8)'; ov.fillText('round', cx + rpx + 38*DPR, y + 4*DPR);
-        }
-      }
-    }
-  }
-  if(probeZ !== null){
-    const y = yc(probeZ); ov.strokeStyle = 'rgba(255,255,255,.18)'; ov.lineWidth = 1*DPR;
-    ov.beginPath(); ov.moveTo(cu.x, y); ov.lineTo(cu.x+cu.w, y); ov.stroke();
-  }
+  ov.stroke();
+  ov.fillStyle = cream+'.75)'; ov.font = `italic ${12.5*DPR}px Alegreya, Georgia, serif`;
+  if(innerWidth >= 720) ov.fillText(m ? 'the wobble' : 'no wobble', gx + 18*DPR, y(0.012));
 }
+const centerFrac = () => innerWidth < 720 ? 0.71 : 0.5;   // on phones the water moves right, the words keep the left
+function dominantMode(){
+  let best = null;
+  for(const n of [2,3,4]){ const md = M.modes[n]; if(md.eps0 > 0.002 && (!best || md.eps0 > best.eps0)) best = md; }
+  return best;
+}
+function maxEps(m){ let e = 0; for(let i=0; i<=M.idx(Z1); i++) e = Math.max(e, m.eps[i]); return e; }
 
-// ======================================================================
-//  UI
-// ======================================================================
-const $ = id => document.getElementById(id);
-const fmt = (x, d=2) => Number.isFinite(x) ? x.toFixed(d) : '—';
-function syncInputs(){
-  $('q').value = sliderFromQ(P.qLmin); $('d').value = P.D; $('e2').value = P.ar; $('e3').value = P.e3; $('e4').value = P.e4;
-  $('rot').value = P.rot; $('tc').value = P.Tc; $('soap').checked = P.soap; $('nz').value = P.noise;
-  $('lt').value = P.light; $('card').checked = P.card; $('dye').value = P.dye; $('ex').value = P.ex; $('az').value = P.az; $('el').value = P.el; $('win').value = P.win; $('len').value = P.len;
-  $('ann').checked = P.ann; $('frz').checked = P.frz;
+// ---------------- words ----------------
+function say(){
+  const m = dominantMode();
+  const el = document.getElementById('say');
+  if(!m){ el.innerHTML = 'A perfectly round spout gives<br>nothing to overshoot: no X.<br><span style="opacity:.6">Drag to walk around.</span>'; return; }
+  const l0 = 2*Math.PI/m.k[0]*100, l1 = 2*Math.PI/m.k[M.idx(0.15)]*100;
+  el.innerHTML = `One X every ${l0.toFixed(1)} cm at the spout,<br>${l1.toFixed(1)} cm a hand's width lower.<br><span style="opacity:.6">Drag to walk around.</span>`;
 }
-function labels(){
-  $('qo').textContent = P.qLmin.toFixed(P.qLmin<1?2:1) + ' L/min';
-  $('do').textContent = P.D.toFixed(1) + ' mm';
-  $('e2o').textContent = P.ar.toFixed(3); $('e3o').textContent = P.e3.toFixed(3); $('e4o').textContent = P.e4.toFixed(3);
-  $('roto').textContent = P.rot + '°'; $('tco').textContent = P.Tc + ' °C';
-  $('nzo').textContent = '10^' + P.noise.toFixed(1);
-  $('dyeo').textContent = P.dye ? Math.round(P.dye*100)+' %' : 'none'; $('exo').textContent = P.ex.toFixed(2);
-  $('azo').textContent = P.az + '°'; $('elo').textContent = P.el + '°';
-  $('wino').textContent = P.win + ' cm'; $('leno').textContent = P.len + ' cm';
+const glyph = s => {   // spout outline, deformation drawn 3x exaggerated so it reads at icon size
+  const r0 = 20*Math.PI/180, e2 = (s.ar-1)/(s.ar+1);
+  let d = '';
+  for(let k=0;k<=72;k++){
+    const t = k/72*2*Math.PI;
+    const R = 6.2*(1 + 3*(e2*Math.cos(2*(t-r0)) + s.e3*Math.cos(3*(t-r0-0.3)) + s.e4*Math.cos(4*(t-r0-0.15))));
+    d += (k?'L':'M') + (7.5+R*Math.cos(t)).toFixed(2) + ' ' + (7.5-R*Math.sin(t)).toFixed(2);
+  }
+  return `<svg viewBox="0 0 15 15" aria-hidden="true"><path d="${d}Z" fill="none" stroke="currentColor" stroke-width="1"/></svg>`;
+};
+function buildLists(){
+  document.getElementById('spouts').innerHTML = SPOUTS.map((s,i)=>`<li><button data-s="${i}" class="${i===spoutI?'on':''}">${glyph(s)}${s.name}</button></li>`).join('');
+  document.getElementById('flows').innerHTML = FLOWS.map((f,i)=>`<li><button data-f="${i}" class="${i===flowI?'on':''}">${f.name}</button></li>`).join('');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.s !== undefined){ spoutI = +b.dataset.s; full(); }
+  else if(b.dataset.f !== undefined){ flowI = +b.dataset.f; full(); }
+  else if(b.dataset.page){ showPage(b.dataset.page); }
+});
+function full(){ applyChoice(); compute(); uploadTex(); buildLists(); say(); lastInteract = performance.now(); dirty = true; if(!document.getElementById('physics').hidden) drawPhysics(); }
+
+// ---------------- drag to walk around ----------------
+let drag = null;
+glc.addEventListener('pointerdown', e => { drag = {x:e.clientX, az:P.az}; glc.setPointerCapture(e.pointerId); });
+glc.addEventListener('pointermove', e => {
+  if(!drag) return;
+  P.az = ((drag.az - (e.clientX - drag.x)*0.35) % 360 + 360) % 360;
+  lastInteract = performance.now(); dirty = true;
+});
+glc.addEventListener('pointerup', () => drag = null);
+glc.addEventListener('pointercancel', () => drag = null);
+
+// ---------------- second page ----------------
+function showPage(name){
+  document.getElementById('piece').hidden = name !== 'piece';
+  document.getElementById('physics').hidden = name !== 'physics';
+  window.scrollTo(0,0);
+  if(name === 'physics') drawPhysics(); else { resize(); dirty = true; }
+}
+function drawPhysics(){ drawChart(); readouts(); }
+function drawChart(){
+  const c = document.getElementById('chart'), x = c.getContext('2d');
+  const d = Math.min(window.devicePixelRatio||1, 2), W = c.clientWidth*d, H = c.clientHeight*d;
+  c.width = W; c.height = H; x.clearRect(0,0,W,H);
+  const L = 0.35, iMax = M.idx(L), pad = 6*d, X = z => pad + z/L*(W-2*pad);
+  x.font = `italic ${13*d}px Alegreya, Georgia, serif`;
+  const cream = a => `rgba(244,241,228,${a})`;
+  // top: the radius (as the stream's own silhouette, both sides)
+  const top0 = 22*d, top1 = H*0.42, aMax = M.a0*1000;
+  const Ya = v => (top0+top1)/2 - v/aMax*(top1-top0)/2;
+  x.fillStyle = cream(.14); x.beginPath();
+  for(let i=0;i<=iMax;i+=2) x.lineTo(X(M.z[i]), Ya(M.a[i]*1000));
+  for(let i=iMax;i>=0;i-=2) x.lineTo(X(M.z[i]), Ya(-M.a[i]*1000));
+  x.fill();
+  x.fillStyle = cream(.85); x.fillText('the stream thins as it speeds up', pad, 14*d);
+  // bottom: the wobble
+  const m = dominantMode();
+  const b0 = H*0.56, b1 = H - 24*d, mid = (b0+b1)/2;
+  x.strokeStyle = cream(.25); x.lineWidth = 1*d; x.beginPath(); x.moveTo(pad, mid); x.lineTo(W-pad, mid); x.stroke();
+  x.fillStyle = cream(.85); x.fillText(m ? 'the wobble: above the line the oval points one way, below it the other; each crossing is a round moment' : 'a round spout: no wobble', pad, b0 - 8*d);
+  if(m){
+    let e = 0; for(let i=0;i<=iMax;i++) e = Math.max(e, m.eps[i]);
+    x.strokeStyle = cream(.95); x.lineWidth = 1.3*d; x.beginPath();
+    for(let i=0;i<=iMax;i++){ const yy = mid - m.c[i]/e*(b1-b0)/2; i ? x.lineTo(X(M.z[i]), yy) : x.moveTo(X(M.z[i]), yy); }
+    x.stroke();
+  }
+  x.fillStyle = cream(.6);
+  for(let cm=0; cm<=35; cm+=5){ x.textAlign = cm===0?'left':(cm===35?'right':'center'); x.fillText(cm+' cm', X(cm/100), H-4*d); }
+  x.textAlign = 'left';
+  document.getElementById('chartnote').textContent =
+    `${SPOUTS[spoutI].name[0].toUpperCase()+SPOUTS[spoutI].name.slice(1)} spout, running ${FLOWS[flowI].name.replace('.','')}, over the first 35 cm.`;
 }
 function readouts(){
-  const m2 = M.modes[2];
-  const lam = (n, zz) => 2*Math.PI/M.modes[n].k[M.idx(zz)]*100;
+  const f = (v,d=2) => Number.isFinite(v) ? v.toFixed(d) : '—';
+  const m = dominantMode();
+  const lam = zz => m ? f(2*Math.PI/m.k[M.idx(zz)]*100,2)+' cm' : '—';
   const rows = [
-    ['Exit speed U₀', fmt(M.U0,2)+' m/s'],
-    ['Speed 30 cm down', fmt(M.U[M.idx(0.3)],2)+' m/s'],
-    ['Jet radius at spout / 30 cm', fmt(M.a0*1000,2)+' / '+fmt(M.a[M.idx(0.3)]*1000,2)+' mm'],
-    ['Surface tension σ', fmt(M.sigma*1000,1)+' mN/m'+(P.soap?' (est.)':'')],
-    ['Oval wobble frequency f₂ (spout)', fmt(M.f2,1)+' Hz'],
-    ['X spacing λ₂ at spout', fmt(lam(2,0),2)+' cm'],
-    ['X spacing λ₂ 10 cm / 30 cm down', fmt(lam(2,0.1),2)+' / '+fmt(lam(2,0.3),2)+' cm'],
-    ['Bohr amplitude correction', '+'+fmt((Math.sqrt(1+37/24*m2.eps0*m2.eps0)-1)*100,2)+' % λ'],
-    ['Reynolds number (spout)', fmt(M.Re,0)],
-    ['Weber number (spout)', fmt(M.We,1)],
-    ['Ohnesorge number', fmt(M.Oh,4)],
-    ['Breakup into drops (estimate)', isFinite(M.zBreak) ? fmt(M.zBreak*100,0)+' cm' : '> '+(ZMAX*100).toFixed(0)+' cm'],
+    ['Flow', f(P.qLmin,1)+' L/min'],
+    ['Exit speed', f(M.U0,2)+' m/s'],
+    ['Speed 15 cm down', f(M.U[M.idx(0.15)],2)+' m/s'],
+    ['Radius at spout, 15 cm down', f(M.a0*1000,2)+' mm, '+f(M.a[M.idx(0.15)]*1000,2)+' mm'],
+    ['Wobble frequency at spout', m ? f(omegaMode(+Object.keys(M.modes).find(k=>M.modes[k]===m), M.a0, m.k[0], M.sigma, M.rho)/(2*Math.PI),1)+' Hz' : '—'],
+    ['X spacing at spout, 15 cm down', lam(0)+', '+lam(0.15)],
+    ['Reynolds number', f(M.Re,0)],
+    ['Weber number', f(M.We,1)],
+    ['Ohnesorge number', f(M.Oh,4)],
+    ['Breaks into drops (estimate)', Number.isFinite(M.zBreak) ? f(M.zBreak*100,0)+' cm' : 'beyond '+(ZMAX*100).toFixed(0)+' cm'],
   ];
-  $('read').innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  document.getElementById('read').innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
   const w = [];
-  if(M.Re > 4000) w.push('Reynolds number above ~4000: a real spout this fast is likely turbulent, which roughens the surface and smears the X lines. The model assumes a smooth (laminar) jet.');
-  const nm = {2:'oval',3:'triangular',4:'square'};
-  for(const n in M.noRoot) w.push(`The ${nm[n]} wave has no frozen (steady) solution for the first ${(M.noRoot[n]*100).toFixed(1)} cm: the water is still slower than that ripple's own speed, so k·U = ω(k) has no root and the pattern there would not stand still. The long-wave value is drawn there instead.`);
-  if(M.We < 4) w.push('Weber number below ~4: a real tap this slow tends to drip rather than form a continuous jet (rule of thumb, estimate).');
-  if(m2.eps0 > 0.18) w.push('Oval deformation is large (>18 %): linear theory plus Bohr\'s correction is becoming approximate.');
-  if(Math.max(M.modes[2].eps0, M.modes[3].eps0, M.modes[4].eps0) < 0.002) w.push('A perfectly round spout gives no shape wave at all, so no X. Only the breakup ripples remain.');
-  $('warns').innerHTML = w.map(t=>`<div class="warn">${t}</div>`).join('');
+  if(M.Re > 4000) w.push('Reynolds number above about 4000: a real spout this fast may run rough, blurring the X.');
+  if(M.We < 4) w.push('Weber number below about 4: a real tap this slow tends to drip.');
+  const nm = {2:'oval',3:'three-cornered',4:'square'};
+  for(const n in M.noRoot) w.push(`The ${nm[n]} wobble cannot stand still for the first ${(M.noRoot[n]*100).toFixed(1)} cm (k·U = ω(k) has no root); the long-wave value is used there.`);
+  document.getElementById('warns').innerHTML = w.map(t=>`<p class="est" style="font-size:13.5px;margin:10px 0 0">${t}</p>`).join('');
 }
 
-// ---------------- plots ----------------
-function drawPlots(){
-  const c = $('plot'), x = c.getContext('2d');
-  const W = c.clientWidth*DPR, H = 300*DPR;
-  c.width = W; c.height = H;
-  x.clearRect(0,0,W,H);
-  x.font = `${10.5*DPR}px ui-sans-serif,system-ui,sans-serif`;
-  const L = P.len/100, pad = 34*DPR, padR = 8*DPR;
-  const iMax = M.idx(L);
-  const X = z => pad + z/L*(W-pad-padR);
-  const panels = [{h0:0.02, h1:0.27}, {h0:0.31, h1:0.62}, {h0:0.66, h1:0.92}];
-  const band = (p) => [p.h0*H+6*DPR, p.h1*H];
-  // window band + breakup
-  for(const p of panels){
-    const [y0,y1] = band(p);
-    x.fillStyle = 'rgba(111,195,255,.08)';
-    x.fillRect(X(Math.max(0,zTop)), y0, X(Math.min(L, zTop+P.win/100))-X(Math.max(0,zTop)), y1-y0);
-    if(isFinite(M.zBreak) && M.zBreak < L){ x.strokeStyle='rgba(255,177,92,.7)'; x.setLineDash([3*DPR,3*DPR]);
-      x.beginPath(); x.moveTo(X(M.zBreak),y0); x.lineTo(X(M.zBreak),y1); x.stroke(); x.setLineDash([]); }
-    x.strokeStyle = '#2a333d'; x.beginPath(); x.moveTo(pad,y1); x.lineTo(W-padR,y1); x.stroke();
-  }
-  const line = (arr, p, lo, hi, color, lbl) => {
-    const [y0,y1] = [p.h0*H+6*DPR, p.h1*H];
-    const Y = v => y1 - (v-lo)/(hi-lo)*(y1-y0);
-    x.strokeStyle = color; x.lineWidth = 1.5*DPR; x.beginPath();
-    for(let i=0;i<=iMax;i+=2){ const v = arr(i); i? x.lineTo(X(M.z[i]),Y(v)) : x.moveTo(X(M.z[i]),Y(v)); }
-    x.stroke();
-    return Y;
-  };
-  const axisText = (p, lo, hi, unit, title) => {
-    const [y0,y1] = [p.h0*H+6*DPR, p.h1*H];
-    x.fillStyle = '#8b97a4'; x.textAlign='right';
-    x.fillText(hi.toPrecision(2), pad-4*DPR, y0+8*DPR); x.fillText(lo.toPrecision(2), pad-4*DPR, y1);
-    x.textAlign='left'; x.fillStyle='#c5cdd6'; x.fillText(title+' ('+unit+')', pad+4*DPR, y0+8*DPR);
-  };
-  // panel 1: radius
-  const aMax = M.a0*1000*1.05;
-  line(i=>M.a[i]*1000, panels[0], 0, aMax, '#d9d2c2');
-  axisText(panels[0], 0, aMax, 'mm', 'jet radius a');
-  // panel 2: wavelengths
-  const act = [2,3,4].filter(n=>M.modes[n].eps0>0.002);
-  let lmax = 0.1; for(const n of act) lmax = Math.max(lmax, 2*Math.PI/M.modes[n].k[iMax]*100);
-  const col = {2:'#6fc3ff',3:'#ff8fb1',4:'#b9e27a'};
-  for(const n of act) line(i=>2*Math.PI/M.modes[n].k[i]*100, panels[1], 0, lmax*1.08, col[n]);
-  axisText(panels[1], 0, lmax*1.08, 'cm', 'local wavelength λₙ');
-  let lx = W - padR - 4*DPR; x.textAlign='right';
-  for(const n of act.slice().reverse()){ x.fillStyle = col[n]; x.fillText({2:'oval',3:'triangle',4:'square'}[n], lx, panels[1].h0*H+18*DPR); lx -= 52*DPR; }
-  x.textAlign='left';
-  // panel 3: deformation c_n(z)
-  let emax = 0.02; for(const n of act) for(let i=0;i<=iMax;i++) emax = Math.max(emax, M.modes[n].eps[i]);
-  for(const n of act) line(i=>M.modes[n].c[i], panels[2], -emax*1.1, emax*1.1, col[n]);
-  axisText(panels[2], -emax*1.1, emax*1.1, 'fraction of radius', 'shape deformation εₙ cos φₙ');
-  // x axis
-  x.fillStyle = '#8b97a4'; x.textAlign='center';
-  for(let cm=0; cm<=P.len; cm+= (P.len>30?10:5)) x.fillText(cm+' cm', X(cm/100), H-4*DPR);
-  x.textAlign='left';
-}
+window.addEventListener('resize', () => { resize(); dirty = true; if(!document.getElementById('physics').hidden) drawChart(); });
+P.az = 150; P.el = 8;
+buildLists(); resize(); full(); requestAnimationFrame(frame);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { dirty = true; });
 
-// ---------------- cross-section probe ----------------
-let probeZ = null;
-function drawXsec(){
-  const c = $('xsec'), x = c.getContext('2d'); const W = c.width, H = c.height;
-  x.clearRect(0,0,W,H); x.fillStyle = '#0f1318'; x.fillRect(0,0,W,H);
-  const zz = probeZ === null ? Math.max(0, zTop + P.win/200) : probeZ;
-  if(zz < 0){ x.fillStyle='#8b97a4'; x.font='22px sans-serif'; x.fillText('inside spout', 70, 150); return; }
-  const i = M.idx(zz), a = M.a[i]*1000;
-  const c2 = M.modes[2].c[i], c3 = M.modes[3].c[i], c4 = M.modes[4].c[i];
-  const r0 = P.rot*Math.PI/180, th = [r0, r0+0.3, r0+0.15];
-  const norm = Math.sqrt(1 + 0.5*(c2*c2+c3*c3+c4*c4));
-  const S = 0.62*W/2/(M.a0*1000*1.25);
-  const sc = 0.62*W/2/(a*1.35);
-  x.save(); x.translate(W/2, H/2);
-  x.setLineDash([5,5]); x.strokeStyle='rgba(200,210,220,.35)'; x.lineWidth=1.5;
-  x.beginPath(); x.arc(0,0,a*sc,0,2*Math.PI); x.stroke(); x.setLineDash([]);
-  x.beginPath();
-  for(let k=0;k<=240;k++){
-    const t = k/240*2*Math.PI;
-    const R = a*(1 + c2*Math.cos(2*(t-th[0])) + c3*Math.cos(3*(t-th[1])) + c4*Math.cos(4*(t-th[2])))/norm;
-    const px = R*Math.cos(t)*sc, py = -R*Math.sin(t)*sc;   // world y up on screen
-    k ? x.lineTo(px,py) : x.moveTo(px,py);
-  }
-  x.closePath(); x.fillStyle='rgba(111,195,255,.22)'; x.fill(); x.strokeStyle='#6fc3ff'; x.lineWidth=2.5; x.stroke();
-  // view direction arrow (camera looks along +d)
-  const az = P.az*Math.PI/180, dx = Math.cos(az), dy = -Math.sin(az);
-  x.strokeStyle='#e6ebf0'; x.fillStyle='#e6ebf0'; x.lineWidth=2;
-  const L0 = 0.98*W/2, L1 = 0.72*W/2;
-  x.beginPath(); x.moveTo(-dx*L0, -dy*L0); x.lineTo(-dx*L1, -dy*L1); x.stroke();
-  x.beginPath(); x.arc(-dx*L0, -dy*L0, 6, 0, 2*Math.PI); x.fill();
-  x.restore();
-  x.fillStyle='#8b97a4'; x.font='20px ui-sans-serif,system-ui,sans-serif';
-  x.fillText(`${(zz*100).toFixed(1)} cm down`, 10, 26);
-  x.fillText(`a = ${a.toFixed(2)} mm`, 10, H-12);
-  $('xsnote').textContent = `Slice ${(zz*100).toFixed(1)} cm below the spout. Shape magnified to fill the box (true radius ${a.toFixed(2)} mm). The eye marks where you stand. The dashed circle is a round jet with the same area.`;
-}
-
-// ---------------- events ----------------
-function full(){ compute(); uploadTex(); labels(); readouts(); drawPlots(); drawXsec(); }
-function bind(id, key, conv=parseFloat, recompute=true){
-  $(id).addEventListener('input', e => {
-    P[key] = conv(e.target.type==='checkbox' ? e.target.checked : e.target.value);
-    interacting();
-    if(recompute) full(); else { labels(); drawPlots(); drawXsec(); }
-  });
-}
-bind('q','qLmin', v=>qFromSlider(parseFloat(v)));
-bind('d','D'); bind('e2','ar'); bind('e3','e3'); bind('e4','e4'); bind('rot','rot', v=>parseInt(v), false);
-bind('tc','Tc', v=>parseInt(v)); bind('soap','soap', v=>!!v); bind('nz','noise');
-bind('lt','light', v=>parseInt(v), false); bind('card','card', v=>!!v, false); bind('dye','dye', parseFloat, false); bind('ex','ex', parseFloat, false); bind('az','az', v=>parseInt(v), false); bind('el','el', v=>parseInt(v), false);
-bind('win','win', parseFloat, false); bind('len','len', v=>parseInt(v), false);
-bind('ann','ann', v=>!!v, false); bind('frz','frz', v=>!!v, false);
-document.querySelectorAll('#shapes button').forEach(b => b.addEventListener('click', () => {
-  Object.assign(P, PRESETS[b.dataset.p]); syncInputs(); full(); interacting();
-}));
-
-let drag = null;
-stage.addEventListener('pointerdown', e => {
-  const r = stage.getBoundingClientRect(); const xC = e.clientX - r.left, yC = e.clientY - r.top;
-  if(xC < OVW){ jumpTo(yC, r.height); drag = {mode:'ov', h:r.height}; }
-  else drag = {mode:'cu', x:e.clientX, y:e.clientY, az:P.az, zt:zTop, h:r.height};
-  stage.setPointerCapture(e.pointerId);
-});
-stage.addEventListener('pointermove', e => {
-  const r = stage.getBoundingClientRect(); const xC = e.clientX - r.left, yC = e.clientY - r.top;
-  if(xC >= OVW) { probeZ = zTop + yC/r.height*P.win/100; drawXsec(); }
-  if(!drag) return;
-  if(drag.mode==='ov'){ jumpTo(yC, drag.h); return; }
-  P.az = Math.round(((drag.az - (e.clientX - drag.x)*0.4) % 360 + 360) % 360); $('az').value = P.az;
-  setTop(drag.zt - (e.clientY - drag.y)/drag.h*P.win/100);
-  labels();
-});
-stage.addEventListener('pointerup', () => drag = null);
-stage.addEventListener('pointerleave', () => { probeZ = null; drawXsec(); });
-stage.addEventListener('wheel', e => { e.preventDefault(); setTop(zTop + e.deltaY*0.00005*P.win); }, {passive:false});
-function setTop(z){ zTop = Math.max(-0.015, Math.min(ZMAX - P.win/100, z)); interacting(); drawPlots(); }
-function jumpTo(yC, h){ const z = -0.004 + yC/h*(P.len/100+0.004); setTop(z - P.win/200); drawXsec(); }
-
-window.addEventListener('resize', () => { resize(); drawPlots(); markDirty(); });
-syncInputs(); resize(); full(); requestAnimationFrame(frame);
 </script>
 </body>
 </html>

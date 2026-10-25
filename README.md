@@ -1,17 +1,20 @@
-# 03 Water X Stream
+# 03 X Stream
 
 **▶ Play it:** https://hanji-xu.github.io/x-stream/
 
 **Observation (Hanji):** a smooth stream from a tap shows alternating X-shaped lines along its length.
 ([r/askscience thread](https://www.reddit.com/r/askscience/comments/34ne9l/what_causes_x_shaped_lines_on_the_stream_when_i/))
 
-**Piece:** one self-contained HTML file. Open it in a browser that has WebGL2 (any current Chrome, Safari, Firefox, Edge). No network needed.
+**Piece:** one self-contained HTML file (index.html). It needs a browser with WebGL2. Everything works offline except the Alegreya web font, which falls back to Georgia.
 
 ## What you see
 
-- **Left strip:** the whole stream from the spout down, at true scale. The blue box is the close-up window. Click or drag in it to move the window.
-- **Close-up:** the stream ray-traced at true scale (no horizontal stretch; the 1 cm scale bar is real). Drag sideways to walk around the stream, drag up and down or scroll to move along it. Blue "round" ticks mark the nodes where the cross-section passes through a circle.
-- **Side panel:** sliders for the tap, spout shape, water and view; live physics readouts; plots of radius, local wavelength and shape deformation along the stream; a cross-section of the stream at the cursor.
+A calm sage page with a single stream of water, ray-traced at true scale and lit by morning light.
+- **Water from a { round / everyday / oval / three-cornered / square } spout**: pick the spout. The icons show each shape, with the out-of-round part drawn 3× bigger so it is visible at icon size.
+- **running { a trickle / gently / steadily / briskly }**: 0.6, 1.0, 1.6 or 2.4 L/min through an 8 mm bore.
+- **Drag sideways** to walk around the stream.
+- The hairline beside the water is the wobble itself, at the same heights as the stream. Its sign flips at every node.
+- **How it works** opens a second page with a short explanation, a chart, and expandable sections: numbers for the current stream, equations, constants, estimates and sources.
 
 ## Why the X appears
 
@@ -54,11 +57,9 @@ The surface is `R(θ,z) = a(z) · [1 + Σₙ cₙ(z) cos n(θ − θₙ)] / √(
 ### 4. Optics (every pixel)
 - Orthographic camera, rays hit the exact surface R(θ,z,t) (ray march + bisection). The normal is the numerical gradient of `|r| − R`, which includes the slope dR/dz. That slope is what tilts the highlights.
 - **Snell refraction** in and out, **Fresnel reflection** (Schlick approximation), total internal reflection, n = 1.333.
-- Light comes from a simple room at infinity: wall tiles, a window, an under-cabinet strip and a ceiling light (Kitchen); two tall strip lights (Dark room); a window behind the stream (Backlit). The rooms are invented; the optics is not.
+- Light comes from a simple room at infinity: sage walls matching the page, a shadowed basin below, a low morning sun front-right of the viewer, a window with mullions behind the stream and a soft ceiling light. The room is invented; the optics is not. Where a ray misses the water the canvas is transparent, so the page colour shows through.
 - Water absorption per mm is included but negligible at this size, which is why a clean stream is so hard to see.
-- **Food dye** (default 35 %) adds Beer–Lambert absorption along each ray's path inside the water, `exp(−α L)` with α = dye × (0.35, 0.20, 0.04) per mm for red, green, blue (a blue dye; the coefficients are illustrative, not a measured dye). Thicker parts of the stream look darker, so the shape reads at a glance. Set it to 0 for clear water.
-- **Checkered card** (optional): a real 3 mm checkerboard plane 4 cm behind the stream. Refraction through the jet distorts it like a glass rod, which is the standard way to photograph clear jets.
-- **Exposure** only scales the image brightness before tone mapping.
+- **Food dye** (always on, 35 %) adds Beer–Lambert absorption along each ray's path inside the water, `exp(−α L)` with α = dye × (0.35, 0.20, 0.04) per mm for red, green, blue (a blue dye; the coefficients are illustrative, not a measured dye). Thicker parts of the stream look darker, so the shape reads at a glance.
 - Performance: the image redraws only when something changes (or while breakup ripples are on screen), at half resolution while you drag. If the GPU resets, the page rebuilds the renderer instead of going blank.
 
 ### Constants
@@ -69,7 +70,6 @@ The surface is `R(θ,z) = a(z) · [1 + Σₙ cₙ(z) cos n(θ − θₙ)] / √(
 | Viscosity μ(T) | `2.414×10⁻⁵ · 10^(247.8/(T − 140))` Pa·s, T in K | Vogel-type fit, ~2 % |
 | Density ρ(T) | `1000 [1 − (t + 288.9414)/(508929.2 (t + 68.12963)) (t − 3.9863)²]` kg/m³, t in °C | Thiesen-type fit |
 | Refractive index | 1.333 | water, visible |
-| Dish soap σ | 45 mN/m | **ESTIMATE** (see below) |
 
 ## Estimates and limits (flagged)
 - **Spout shape is unknown for any real tap.** The "Ordinary tap (guess)" preset (axis ratio 1.25, small triangular and square parts) is a guess chosen so the X is as visible as in real life. Deformations around 10 % of the radius match what people see; a few % gives a much fainter pattern.
@@ -78,10 +78,10 @@ The surface is `R(θ,z) = a(z) · [1 + Σₙ cₙ(z) cos n(θ − θₙ)] / √(
 - **Dripping warning** below Weber number ≈ 4 is a rule of thumb.
 - **Amplitude growth with stretching** (a^−1/4) and the damping formula are leading-order estimates. At default settings they are each about ±25 % over 30 cm and roughly cancel.
 - **Bohr's 37/24 coefficient** is quoted from memory of the literature, consistent with the check above, not re-derived.
-- **Dish soap:** a jet surface is only milliseconds old, so the surfactant has not fully adsorbed. The effective dynamic surface tension sits between clean water (72) and the soap's equilibrium value (~25–30). 45 mN/m is an estimate.
-- **Breakup:** linear growth, stretching effects on the ripple amplitude ignored, starting noise level is a slider (no real data). Drops after pinch-off are drawn schematically (the linear surface simply goes through zero).
+- **Breakup:** linear growth, stretching effects on the ripple amplitude ignored, starting noise level is assumed (no real data). Drops after pinch-off are drawn schematically (the linear surface simply goes through zero).
 - **Air drag** and the air's own effect on the waves are neglected (fine below a few m/s).
-- **Room lighting** is invented. Only the geometry and optics are computed.
+- **Room lighting and dye** are invented, to make clear water visible. Only the geometry and optics are computed.
+- Fixed settings: 8 mm bore, 18 °C clean water, spout rotated 20°, tap vibration 10^−4.3 of the radius.
 
 ## References
 - Lord Rayleigh, "On the capillary phenomena of jets", Proc. R. Soc. Lond. 29 (1879).

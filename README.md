@@ -1,5 +1,7 @@
 # 03 Water X Stream
 
+**▶ Play it:** https://hanji-xu.github.io/x-stream/
+
 **Observation (Hanji):** a smooth stream from a tap shows alternating X-shaped lines along its length.
 ([r/askscience thread](https://www.reddit.com/r/askscience/comments/34ne9l/what_causes_x_shaped_lines_on_the_stream_when_i/))
 

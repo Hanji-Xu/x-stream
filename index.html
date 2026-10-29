@@ -75,6 +75,9 @@ a{color:inherit}
   #physics{padding:24px 18px 60px}
 }
 </style>
+<!-- GoatCounter: privacy-friendly visitor count, no cookies -->
+<script data-goatcounter="https://hanjixu.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 
@@ -651,7 +654,12 @@ glc.addEventListener('pointerup', () => drag = null);
 glc.addEventListener('pointercancel', () => drag = null);
 
 // ---------------- second page ----------------
+// count the second view as its own path in GoatCounter (skipped if blocked or not loaded yet)
+function countView(slug, title) {
+  try { if (window.goatcounter && goatcounter.count) goatcounter.count({ path: location.pathname.replace(/index\.html$/, '').replace(/\/?$/, '/') + slug, title: title }); } catch (e) {}
+}
 function showPage(name){
+  if(name === 'physics') countView('how-it-works', 'How it works');
   document.getElementById('piece').hidden = name !== 'piece';
   document.getElementById('physics').hidden = name !== 'physics';
   document.getElementById('scroll').hidden = name !== 'piece';
